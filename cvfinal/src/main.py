@@ -20,7 +20,7 @@ def procrustesTranslateVector(vector):
     som = 0
     P = vector.shape[0]
     for j in range(P):
-        som = sum + vector[j]
+        som = som + vector[j]
     avg = som/P
     ret = np.zeros(vector.shape)
     for j in range(P):
