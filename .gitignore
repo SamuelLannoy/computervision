@@ -2,11 +2,12 @@
 ## Eclipse
 #################
 
-*.pydevproject
+cvfinal\.pydevproject
 .project
 .metadata
 bin/
 tmp/
+data/
 *.tmp
 *.bak
 *.swp
@@ -59,3 +60,6 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+.gitignore
+cvfinal/.pydevproject
+*.pydevproject
