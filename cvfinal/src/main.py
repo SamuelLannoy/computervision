@@ -1,10 +1,5 @@
+import cv2
 import numpy as np
-
-'''
-Created on 28-apr.-2014
-
-@author: Samuel Lannoy, Vital D'haveloose
-'''
 
 '''
 Takes numpy matrix with landmarks in the rows (xyxyxy...) and persons in the columns, and returns a similar matrix with the delta of
@@ -33,6 +28,13 @@ def procrustesTranslateVector(vector):
     return ret
 
 
+def readLandmarks(toothId, nbPersons, nbLandmarks):
+    landmarks = np.zeros((nbLandmarks,nbPersons))
+    for personId in range(1, nbPersons+1):
+        f = open('../data/Landmarks/original/landmarks' + str(personId) + '-' + str(toothId) + '.txt', 'r')
+        for landmarkId in range(nbLandmarks): 
+            landmarks[landmarkId, personId-1] = float(f.readline())
+    return landmarks
+    
 if __name__ == '__main__':
-    pass
-
+    print readLandmarks(1, 14, 80)
