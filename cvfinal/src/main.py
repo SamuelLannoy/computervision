@@ -27,13 +27,19 @@ def procrustesTranslateVector(vector):
         ret[j] = vector[j] - avg
     return ret
 
-
+'''
+Creates a  tooth matrix from the landmarks in the files.
+A tooth matrix is a Landmark x Person x Dimension matrix,
+with dimension = 0 -> x and dimension = 1 -> y
+'''
 def readLandmarks(toothId, nbPersons, nbLandmarks):
-    landmarks = np.zeros((nbLandmarks, nbPersons))
+    landmarks = np.zeros((nbLandmarks, nbPersons, 2))
     for personId in range(1, nbPersons+1):
-        f = open('../data/Landmarks/original/landmarks' + str(personId) + '-' + str(toothId) + '.txt', 'r')
-        for landmarkId in range(nbLandmarks): 
-            landmarks[landmarkId, personId-1] = float(f.readline())
+        f = open('../data/Landmarks/original/landmarks' 
+                 + str(personId) + '-' + str(toothId) + '.txt', 'r')
+        for landmarkId in range(nbLandmarks/2): 
+            landmarks[landmarkId, personId-1, 0] = float(f.readline())
+            landmarks[landmarkId, personId-1, 1] = float(f.readline())
     return landmarks
     
 if __name__ == '__main__':
