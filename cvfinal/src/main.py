@@ -2,29 +2,27 @@ import cv2
 import numpy as np
 
 '''
-Takes numpy matrix with landmarks in the rows (xyxyxy...) and persons in the columns, and returns a similar matrix with the delta of
-each entry to the average over the persons.
+Takes toothmatrix, and returns a similar one with, for every person, the landmarks in coordinates with an origin in the mean of those landmarks.
 '''
 def procrustesTranslateMatrix(matrix):
-    L = matrix.shape[0]
+    nbP = matrix.shape[1]
     ret = np.zeros(matrix.shape)
-    for i in range(L):
-        ret[i,:] = procrustesTranslateVector(matrix[i,:])
+    for p in range(nbP):
+        ret[:,p,0] = procrustesTranslateVector(matrix[:,p,0])
+        ret[:,p,1] = procrustesTranslateVector(matrix[:,p,1])
     return ret
 
 '''
-Takes numpy vector with the values for different persons and one landmark, and returns a similar vector with the delta of
-each entry to the average over the persons.
+Takes numpy vector with the values for one persons, different x- or y values of landmarks, and returns a similar vector with the delta of each
+entry to the average over the landmarks.
 '''    
 def procrustesTranslateVector(vector):
-    som = 0
-    P = vector.shape[0]
-    for j in range(P):
-        som = som + vector[j]
-    avg = som/P
+    nbL = vector.shape[0]
+    avg = np.mean(vector)
+    
     ret = np.zeros(vector.shape)
-    for j in range(P):
-        ret[j] = vector[j] - avg
+    for l in range(nbL):
+        ret[l] = vector[l] - avg
     return ret
 
 '''
