@@ -8,7 +8,7 @@ A tooth matrix is a Landmark x Person x Dimension matrix,
 with dimension = 0 -> x and dimension = 1 -> y
 '''
 def readLandmarks(toothId, nbPersons, nbLandmarks):
-    landmarks = np.zeros((nbLandmarks, nbPersons, 2))
+    landmarks = np.zeros((nbLandmarks/2, nbPersons, 2))
     for personId in range(1, nbPersons+1):
         f = open('../data/Landmarks/original/landmarks' 
                  + str(personId) + '-' + str(toothId) + '.txt', 'r')
@@ -19,5 +19,5 @@ def readLandmarks(toothId, nbPersons, nbLandmarks):
     
 if __name__ == '__main__':
     lm = readLandmarks(1, 14, 80)
-    print procrustes.procrustesMatrix(lm)
+    procrustes.procrustesMatrix(lm)
     
