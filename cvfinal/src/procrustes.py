@@ -117,8 +117,11 @@ def procrustesMatrix(matrix):
     # translate to gravity
     itmat = procrustesTranslateMatrix(matrix)
     
-    pt.plotTeeth(itmat)
-    pt.show()
+    '''
+    Show pre-procrustes image
+    '''
+    #pt.plotTeeth(itmat)
+    #pt.show()
     
     # choose one example, scale it
     firstMean = np.zeros(matrix[:,0,:].shape)
@@ -141,8 +144,11 @@ def procrustesMatrix(matrix):
         
         #it = it + 1
         
-    pt.plotTeeth(itmat)
-    pt.show()
+    '''
+    Show post-procrustes image
+    '''
+    #pt.plotTeeth(itmat)
+    #pt.show()
         
     return itmat
 

@@ -19,8 +19,14 @@ def plotTeeth(matrix):
 Takes a matrix of the form Landmark x Dimension and shows it on the screen
 '''
 def plotTooth(matrix):
-    ppl.plot(matrix[:,0], matrix[:,1])
+    ppl.plot(matrix[:,0], matrix[:,1])    
 
+'''
+Takes a matrix of the form Landmark x Dimension and shows it on the screen
+'''
+def plotToothXY(x,y):
+    ppl.plot(x,y)
 
 def show():
+    ppl.gca().invert_yaxis()
     ppl.show()

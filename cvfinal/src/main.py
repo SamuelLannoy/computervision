@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import procrustes
+import plot_teeth
 
 '''
 Creates a  tooth matrix from the landmarks in the files.
@@ -18,6 +19,17 @@ def readLandmarks(toothId, nbPersons, nbLandmarks):
     return landmarks
     
 if __name__ == '__main__':
-    lm = readLandmarks(1, 14, 80)
-    procrustes.procrustesMatrix(lm)
+    landmarks = readLandmarks(1, 14, 80)
+    processedLandmarks = procrustes.procrustesMatrix(landmarks)
+    stackedProcessedLandmarks = np.vstack((processedLandmarks[:,:,0],processedLandmarks[:,:,1])) 
+    pcLandmarks = cv2.PCACompute(np.transpose(stackedProcessedLandmarks))
+    pcLandmarksMean = pcLandmarks[0][0]
+    pcLandmarksEig = pcLandmarks[1]
+    
+    pcLandmarksMeanX = pcLandmarksMean[0:len(pcLandmarksMean)/2]
+    pcLandmarkMeanY = pcLandmarksMean[len(pcLandmarksMean)/2:len(pcLandmarksMean)]
+    plot_teeth.plotToothXY(pcLandmarksMeanX, pcLandmarkMeanY)
+    plot_teeth.show()
+
+    
     
