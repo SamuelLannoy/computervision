@@ -1,4 +1,6 @@
 import numpy as np
+import cv2
+import main
 
 '''
 Created on 20-mei-2014
@@ -9,14 +11,30 @@ Created on 20-mei-2014
 '''
 Returns the mean of the profiles of the images (g striped), and the covariance matrix (S_g).
 '''
-#def getModel(imgs, point, direction, N):
+def getModel(imgs, points, N):
+    profiles = np.zeros((points.shape[0], points.shape[1], 2*N+1), dtype=np.int)
+    means = np.zeros((points.shape[0], 2*N+1), dtype=np.int)
+    
+    for p in range(points.shape[1]):
+        directions = getDirections(points[:,p,:])
+        for l in range(points.shape[0]):
+            profiles[l,p,:] = getProfile(imgs[p], points[l,p,:], directions[l,:], N)
+    means = np.mean(profiles, axis=1)
+    return means
 
+def getDirections(points):
+    dirs = np.zeros(points.shape[0],2)
+    for i in range(dirs.shape[0]):
+        dirs[i] = np.array([1,0])
+    return dirs
 
 '''
 Returns an array of 2*N+1 grey values that represent the
 profile in the given image, at the given point in the given direction.
 '''
-#def getProfile(img, point, direction, N):
+def getProfile(img, point, direction, N):
+    (xs_profile, ys_profile) = getProfilePixels(point, direction, N)
+    return img[ys_profile, xs_profile]
     
 '''
 direction is a unit vector that goes what we call Right
@@ -28,8 +46,8 @@ def getProfilePixels(point, direction, N):
     t_next_x = delta_x/2
     t_next_y = delta_y/2
     
-    profile_xs = np.zeros(2*N+1)
-    profile_ys = np.zeros(2*N+1)
+    profile_xs = np.zeros(2*N+1, dtype=np.int)
+    profile_ys = np.zeros(2*N+1, dtype=np.int)
     
     curr_cell_L = point
     curr_cell_R = point
@@ -71,6 +89,11 @@ to the learnedProfile so that the Mahalanobis distance becomes minimal.
 '''
 #def matchProfile(learnedProfile, profileToMatch):
     
-print getProfilePixels((100,100), (np.sqrt(3.0)/2.0, 0.5), 10)
-
+img1 = cv2.imread('../data/Radiographs/01.tif',0)
+img2 = cv2.imread('../data/Radiographs/02.tif',0)
+imgs = np.array([img1,img2])
+points = main.readLandmarks(1, 2, 40)
+#img = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,12,13,14]])
+#print getProfile(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
+print getModel(imgs, points, 10)
     
