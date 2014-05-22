@@ -34,7 +34,9 @@ profile in the given image, at the given point in the given direction.
 '''
 def getProfile(img, point, direction, N):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, N)
-    return img[ys_profile, xs_profile]
+    prof = img[ys_profile, xs_profile]
+    norm = np.linalg.norm(prof, 1)
+    return 1/norm*prof
     
 '''
 direction is a unit vector that goes what we call Right
