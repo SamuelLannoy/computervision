@@ -13,7 +13,7 @@ Returns the mean of the profiles of the images (g striped), and the covariance m
 points is LM x Pers x Dim
 '''
 def getModel(imgs, points, n):
-    profiles = np.zeros((points.shape[0], points.shape[1], 2*n+1), dtype=np.int)
+    profiles = np.zeros((points.shape[0], points.shape[1], 2*n+1))
     
     for p in range(points.shape[1]):
         profiles[:,p,:] = getProfilesForPerson(imgs[p], points[:,p,:], n)
@@ -51,7 +51,7 @@ points is LM x Dim
 '''
 def getProfilesForPerson(img, points, n):
     directions = getDirectionsForPerson(points)
-    profiles = np.zeros((points.shape[0], 2*n+1), dtype=np.int)
+    profiles = np.zeros((points.shape[0], 2*n+1))
     for l in range(points.shape[0]):
         profiles[l,:] = getProfileForPersonAndLandmark(img, points[l,:], directions[l,:], n)
     return profiles
@@ -64,8 +64,10 @@ point is two-tuple
 '''
 def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
-    return img[ys_profile, xs_profile]
-    
+    prof = img[ys_profile, xs_profile]
+    norm = np.linalg.norm(prof, 1)
+    return prof*1.0/norm # typing problem: int <> float
+
 '''
 direction is a unit vector that goes what we call Right
 '''
@@ -130,7 +132,7 @@ def matchProfiles(model, profiles):
         for t in range(2*(m-n)+1):
             tMean = translateMean(mean, t, m)
             tIcovar = translateCovar(icovar, t, m)
-            dist[t] = cv2.Mahalanobis(profiles[l]*1.0, tMean, tIcovar) # typing problem: int <> double
+            dist[t] = cv2.Mahalanobis(profiles[l]*1.0, tMean, tIcovar) # typing problem: int <> float
     
     return dist
             
@@ -139,8 +141,7 @@ def translateMean(mean, t, m):
     
 def translateCovar(covar, t, m):
     ret = np.zeros((2*m+1, 2*m+1))
-    #ret[t:2*m+1-t-covar.shape[0]] = covar
-    ret[t:t+covar.shape[0], t:t+covar.shape[1]] = covar
+    ret[t:t+covar.shape[0], t:t+covar.shape[1]] = covar #OLD: ret[t:2*m+1-t-covar.shape[0]] = covar
     return ret
     
 img1 = cv2.imread('../data/Radiographs/01.tif',0)
