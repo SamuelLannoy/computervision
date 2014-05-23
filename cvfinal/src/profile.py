@@ -3,13 +3,8 @@ import cv2
 import main
 
 '''
-Created on 20-mei-2014
-
-@author: vital.dhaveloose
-'''
-
-'''
 Returns the mean of the profiles of the images (g striped), and the covariance matrix (S_g).
+
 points is LM x Pers x Dim
 '''
 def getModel(imgs, points, n):
@@ -27,16 +22,9 @@ def getModel(imgs, points, n):
     return covars, means
 
 '''
-points is LM x Pers x Dim
+Returns the directions for a certain person,
+given his model points (landmarks).
 
-def getDirections(points):
-    dirs = np.zeros(points.shape)
-    for p in range(points.shape[1]):
-        dirs[p] = getDirectionsForPerson(points[:,p,:])
-    return dirs
-'''
-
-'''
 points is LM x Dim
 '''
 def getDirectionsForPerson(points):
@@ -47,6 +35,9 @@ def getDirectionsForPerson(points):
     #TODO: real implementation (bisectrice? loodrecht op vorig stuk?)
 
 '''
+Returns the profiles for a person, given all his model points (landmarks) and
+the number of pixels that should be sampled at each side.
+
 points is LM x Dim
 '''
 def getProfilesForPerson(img, points, n):
@@ -69,6 +60,9 @@ def getProfileForPersonAndLandmark(img, point, direction, n):
     return prof*1.0/norm # typing problem: int <> float
 
 '''
+Returns the profile pixels given the middle point, the direction of the profile and
+the number of pixels that should be returned on the left and right of the given point.
+
 direction is a unit vector that goes what we call Right
 '''
 def getProfilePixels(point, direction, n):
@@ -132,18 +126,31 @@ def matchProfiles(model, profiles):
         for t in range(2*(m-n)+1):
             tMean = translateMean(mean, t, m)
             tIcovar = translateCovar(icovar, t, m)
-            dist[t] = cv2.Mahalanobis(profiles[l]*1.0, tMean, tIcovar) # typing problem: int <> float
+            dist[t] = cv2.Mahalanobis(profiles[l], tMean, tIcovar)
     
     return dist
             
+'''
+Translates the given mean into a larger vector with dimension 2*m+1,
+with distance t from the right.
+'''
 def translateMean(mean, t, m):
     return np.concatenate((np.zeros(t), mean, np.zeros(2*m+1-t-mean.shape[0])))
-    
+
+'''
+Translates the given covariance matrix into a larger matrix with dimension (2*m+1, 2*m+1),
+with distance t from the right and the top.
+'''
 def translateCovar(covar, t, m):
     ret = np.zeros((2*m+1, 2*m+1))
     ret[t:t+covar.shape[0], t:t+covar.shape[1]] = covar #OLD: ret[t:2*m+1-t-covar.shape[0]] = covar
     return ret
-    
+
+
+
+'''
+MAIN PROGRAM
+'''    
 img1 = cv2.imread('../data/Radiographs/01.tif',0)
 img2 = cv2.imread('../data/Radiographs/02.tif',0)
 img3 = cv2.imread('../data/Radiographs/03.tif',0)
@@ -153,4 +160,3 @@ points = main.readLandmarks(1, 2, 40)
 #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
 covars, means = getModel(imgs, points, 2)
 print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], 6))
-    
