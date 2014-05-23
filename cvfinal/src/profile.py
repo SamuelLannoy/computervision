@@ -128,7 +128,8 @@ def matchProfiles(model, profiles):
             tIcovar = translateCovar(icovar, t, m)
             dist[t] = cv2.Mahalanobis(profiles[l], tMean, tIcovar)
     
-    return dist
+    print dist
+    return np.argmin(dist)
             
 '''
 Translates the given mean into a larger vector with dimension 2*m+1,
