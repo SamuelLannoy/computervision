@@ -29,10 +29,12 @@ points is LM x Dim
 '''
 def getDirectionsForPerson(points):
     dirs = np.zeros(points.shape)
-    for l in range(points.shape[0]):
-        dirs[l,1] = 1.0
+    
+    dirs[0,1] = (points[0][0]-points[points.shape[0]-1][0]) / (points[0][1]-points[points.shape[0]-1][1])
+    for l in range(1,points.shape[0]):
+        dirs[l,1] = (points[l][0]-points[l-1][0]) / (points[l][1]-points[l-1][1])
+    
     return dirs
-    #TODO: real implementation (bisectrice? loodrecht op vorig stuk?)
 
 '''
 Returns the profiles for a person, given all his model points (landmarks) and
@@ -114,6 +116,7 @@ Returns an integer that indicates the translation of the profileToMatch
 to the learnedProfile so that the Mahalanobis distance becomes minimal.
 '''
 def matchProfiles(model, profiles):
+    tProfiles = np.zeros(profiles.shape[0])
     for l in range(profiles.shape[0]):
         covar = model[0][l]
         mean = model[1][l]
@@ -127,9 +130,9 @@ def matchProfiles(model, profiles):
             tMean = translateMean(mean, t, m)
             tIcovar = translateCovar(icovar, t, m)
             dist[t] = cv2.Mahalanobis(profiles[l], tMean, tIcovar)
-    
-    print dist
-    return np.argmin(dist)
+        tProfiles[l] = m-n-np.argmin(dist)
+        
+    return tProfiles
             
 '''
 Translates the given mean into a larger vector with dimension 2*m+1,
@@ -144,20 +147,33 @@ with distance t from the right and the top.
 '''
 def translateCovar(covar, t, m):
     ret = np.zeros((2*m+1, 2*m+1))
-    ret[t:t+covar.shape[0], t:t+covar.shape[1]] = covar #OLD: ret[t:2*m+1-t-covar.shape[0]] = covar
+    ret[t:t+covar.shape[0], t:t+covar.shape[1]] = covar
     return ret
 
+'''
+Translates the old model to a new model point
+given the translation in number of pixels
+'''
+def translateModelPoint(point, direction, n, tProfile):
+    xs_profile, ys_profile = getProfilePixels(point, direction, n)
+    index = n-1-tProfile
+    return xs_profile[index], ys_profile[index]
+
+def matchModel():
+    return
 
 
 '''
 MAIN PROGRAM
 '''    
-img1 = cv2.imread('../data/Radiographs/01.tif',0)
-img2 = cv2.imread('../data/Radiographs/02.tif',0)
-img3 = cv2.imread('../data/Radiographs/03.tif',0)
-imgs = np.array([img1,img2])
-points = main.readLandmarks(1, 2, 40)
-#img = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,12,13,14]])
-#print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
-covars, means = getModel(imgs, points, 2)
-print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], 6))
+if __name__ == '__main__':
+    img1 = cv2.imread('../data/Radiographs/01.tif',0)
+    img2 = cv2.imread('../data/Radiographs/02.tif',0)
+    img3 = cv2.imread('../data/Radiographs/03.tif',0)
+    imgs = np.array([img1,img2])
+    points = main.readLandmarks(1, 2, 40)
+    #img = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,12,13,14]])
+    #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
+    covars, means = getModel(imgs, points, 2)
+    print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], 6))
+
