@@ -30,10 +30,19 @@ points is LM x Dim
 def getDirectionsForPerson(points):
     dirs = np.zeros(points.shape)
     
-    dirs[0,1] = (points[0][0]-points[points.shape[0]-1][0]) / (points[0][1]-points[points.shape[0]-1][1])
-    for l in range(1,points.shape[0]):
-        dirs[l,1] = (points[l][0]-points[l-1][0]) / (points[l][1]-points[l-1][1])
-    
+    for l in range(0,points.shape[0]):
+        if l == 0:
+            dir1 = (points[0][0]-points[points.shape[0]-1][0]) / (points[0][1]-points[points.shape[0]-1][1])
+        else:
+            dir1 = (points[l][0]-points[l-1][0]) / (points[l][1]-points[l-1][1])
+        
+        if l == points.shape[0]-1:
+            dir2 = (points[0][0]-points[points.shape[0]-1][0]) / (points[0][1]-points[points.shape[0]-1][1])
+        else:
+            dir2 = (points[l+1][0]-points[l][0]) / (points[l+1][1]-points[l][1])
+            
+        dirs[l,1] = np.tan((np.arctan(dir1) + np.arctan(dir2)) / 2)
+
     return dirs
 
 '''
