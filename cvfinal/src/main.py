@@ -33,6 +33,23 @@ def readImages(nbPersons):
         images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
     return images
 
+def readData(toothId, nbPersons, nbLandmarks):
+    xDim = rg.cropX[1] - rg.cropX[0]
+    yDim = rg.cropY[1] - rg.cropY[0]
+    
+    images = np.zeros((nbPersons, yDim, xDim))
+    landmarks = np.zeros((nbLandmarks, nbPersons, 2))
+    for personId in range(0,nbPersons):
+        images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
+        f = open('../data/Landmarks/original/landmarks' 
+                 + str(personId+1) + '-' + str(toothId) + '.txt', 'r')
+        for landmarkId in range(nbLandmarks): 
+            landmarks[landmarkId, personId, 0] = float(f.readline()) - rg.cropX[0]
+            landmarks[landmarkId, personId, 1] = float(f.readline()) - rg.cropY[0]
+            
+    return images, landmarks
+        
+
 '''
 Returns the image to fit from the given person id (15..30)
 '''
@@ -62,11 +79,13 @@ def unstackPointsForPerson(stackedLandmarks):
     return np.column_stack((stackedLandmarks[0:columnLength], stackedLandmarks[columnLength:2*columnLength]))
     
 if __name__ == '__main__':
-    landmarks = readLandmarks(1, 14, 40)
-    images = readImages(14)
-    imageToFit = readImageToFit(17)
+    n1 = 10
+    n2 = 50
     
-    processedLandmarks = procrustes.procrustesMatrix(landmarks,0) 
+    images, landmarks = readData(2, 8, 40)
+    imageToFit = readImageToFit(15)
+    
+    processedLandmarks = procrustes.procrustesMatrix(landmarks,0)
     pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
     
     x = xStriped = np.transpose(pcMean)
@@ -81,7 +100,7 @@ if __name__ == '__main__':
     '''
     
     b = np.zeros_like(xStriped) # Protocol 1: step 1
-    
+    '''
     Y = np.array([[ 284.,    3.],
                  [ 279.,   13.],
                  [ 276.,   24.],
@@ -121,16 +140,19 @@ if __name__ == '__main__':
                  [ 330.,   64.],
                  [ 332.,   57.],
                  [ 332.,   50.],
-                 [ 333.,   45.]]) # Protocol 1: current found points
-                 
-    #Y = init_points.getModelPoints(imageToFit)
+                 [ 333.,   45.]])
+    '''
+    # Protocol 1: current found points
+    Y = init_points.getModelPoints(imageToFit)
     
+    directions = profile.getDirections(landmarks)
+    model = profile.getModel(images, landmarks, directions, n1)
     
     while(1):
         # Protocol 1: step 3 & 4
         y, _ = procrustes.procrustesTranslateMatrixForPerson(Y)
         y, _ = procrustes.procrustesScaleMatrixForPerson(y)
-        y, theta = procrustes.procrustesRotateMatrixForPerson(y, unstackPointsForPerson(x))
+        y, _ = procrustes.procrustesRotateMatrixForPerson(y, unstackPointsForPerson(x))
         
         # Protocol 1: step 5
         yStacked = stackPointsForPerson(y) 
@@ -139,10 +161,14 @@ if __name__ == '__main__':
         # Protocol 1: step 6
         b = np.dot(np.transpose(P), (yStacked - xStriped))
         
-        # Reconstruction
+        # Reconstruction / Protocol 1: step 2
         x = xStriped + np.dot(P, b)
+        
+        # Create new model
+        Y = profile.getNewModelPoints(imageToFit, Y, model, n2)
     
         pt.plotTooth(unstackPointsForPerson(x))
+        pt.plotTooth(unstackPointsForPerson(xStriped))
         pt.show()
 
     

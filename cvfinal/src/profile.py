@@ -7,18 +7,18 @@ Returns the mean of the profiles of the images (g striped), and the covariance m
 
 points is LM x Pers x Dim
 '''
-def getModel(imgs, points, n):
+def getModel(imgs, points, directions, n):
     profiles = np.zeros((points.shape[0], points.shape[1], 2*n+1))
     
     for p in range(points.shape[1]):
-        profiles[:,p,:] = getProfilesForPerson(imgs[p], points[:,p,:], n)
+        profiles[:,p,:] = getProfilesForPerson(imgs[p], points[:,p,:], directions[:,p,:], n)
     
     covars = np.zeros((points.shape[0], 2*n+1, 2*n+1))
     means = np.zeros((points.shape[0], 2*n+1))
     
     for l in range(points.shape[0]):
         [covars[l], means[l]] = cv2.calcCovarMatrix(profiles[l,:,:]*1.0, cv2.cv.CV_COVAR_NORMAL | cv2.cv.CV_COVAR_ROWS)
-        
+    
     return covars, means
 
 '''
@@ -46,13 +46,21 @@ def getDirectionsForPerson(points):
     return dirs
 
 '''
-Returns the profiles for a person, given all his model points (landmarks) and
-the number of pixels that should be sampled at each side.
+points is LM x Pers x Dim
+'''
+def getDirections(points):
+    dirs = np.zeros_like(points)
+    for p in range(points.shape[1]):
+        dirs[:,p,:] = getDirectionsForPerson(points[:,p,:])
+    return dirs
+
+'''
+Returns the profiles for a person, given all his model points (landmarks),
+directions and the number of pixels that should be sampled at each side.
 
 points is LM x Dim
 '''
-def getProfilesForPerson(img, points, n):
-    directions = getDirectionsForPerson(points)
+def getProfilesForPerson(img, points, directions, n):
     profiles = np.zeros((points.shape[0], 2*n+1))
     for l in range(points.shape[0]):
         profiles[l,:] = getProfileForPersonAndLandmark(img, points[l,:], directions[l,:], n)
@@ -140,7 +148,8 @@ def matchProfiles(model, profiles):
             tIcovar = translateCovar(icovar, t, m)
             dist[t] = cv2.Mahalanobis(profiles[l], tMean, tIcovar)
         tProfiles[l] = m-n-np.argmin(dist)
-        
+    
+    print tProfiles
     return tProfiles
             
 '''
@@ -163,11 +172,21 @@ def translateCovar(covar, t, m):
 Translates the old model to a new model point
 given the translation in number of pixels
 '''
-def translateModelPoint(point, direction, n, tProfile):
+def getNewModelPoint(point, direction, n, tProfile):
     xs_profile, ys_profile = getProfilePixels(point, direction, n)
     index = n-1-tProfile
     return xs_profile[index], ys_profile[index]
 
+def getNewModelPoints(imageToFit, points, model, n):
+    directions = getDirectionsForPerson(points)
+    profiles = getProfilesForPerson(imageToFit, points, directions, n)
+    tProfiles = matchProfiles(model, profiles)
+    
+    newPoints = np.zeros_like(points)
+    for i in range(points.shape[0]):
+        newPoints[i] = getNewModelPoint(points[i], directions[i], n, tProfiles[i])
+        
+    return newPoints
 
 '''
 MAIN PROGRAM
@@ -180,6 +199,7 @@ if __name__ == '__main__':
     points = main.readLandmarks(1, 2, 40)
     #img = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,12,13,14]])
     #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
-    covars, means = getModel(imgs, points, 2)
-    print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], 6))
+    directions = getDirections(points)
+    covars, means = getModel(imgs, points, directions, 2)
+    print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], directions[:,1,:], 6))
 

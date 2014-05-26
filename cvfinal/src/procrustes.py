@@ -163,9 +163,7 @@ def procrustesMatrix(matrix, maxIts):
     itmat = procrustesTranslateMatrix(matrix)[0]
     
     # choose one example, scale it (step 2 and 3)
-    firstMean = np.zeros(matrix[:,0,:].shape)
-    firstMean[:,0] = procrustesScaleVector(itmat[:,0,0])[0]
-    firstMean[:,1] = procrustesScaleVector(itmat[:,0,1])[0]
+    firstMean = procrustesScaleMatrixForPerson(itmat[:,0,:])[0]
     
     # loop
     converged = False
