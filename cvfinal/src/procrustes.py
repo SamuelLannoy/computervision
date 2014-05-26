@@ -102,7 +102,7 @@ def getSmallestSSDAngle(target, toAlign):
     wx_zy = wx + zy
     den = wx_zy.sum()
     
-    return np.arctan2(num,den)
+    return np.arctan2(num,den) # left-handed coordinate system
 
 '''
 Rotates the teeth in the given matrix (LM x Pers x Dim) so that they have a smallest SSD to the given tooth (LM x Dim).

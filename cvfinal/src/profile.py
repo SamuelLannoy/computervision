@@ -168,9 +168,6 @@ def translateModelPoint(point, direction, n, tProfile):
     index = n-1-tProfile
     return xs_profile[index], ys_profile[index]
 
-def matchModel():
-    return
-
 
 '''
 MAIN PROGRAM

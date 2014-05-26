@@ -28,5 +28,6 @@ def plotToothXY(x,y):
     ppl.plot(x,y)
 
 def show():
+    ppl.axis('equal')
     ppl.gca().invert_yaxis()
     ppl.show()
