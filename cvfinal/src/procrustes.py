@@ -47,9 +47,9 @@ for every person in the rows (Pers x Dim)
 def procrustesScaleMatrix(matrix):
     nbP = matrix.shape[1]
     ret = np.zeros(matrix.shape)
-    scales = np.zeros((matrix.shape[1],2))
+    scales = np.zeros((matrix.shape[1]))
     for p in range(nbP):
-        (ret[:,p,:], scales[p,:]) = procrustesScaleMatrixForPerson(matrix[:,p,:])
+        (ret[:,p,:], scales[p]) = procrustesScaleMatrixForPerson(matrix[:,p,:])
         
     return ret, scales
 
@@ -57,27 +57,15 @@ def procrustesScaleMatrix(matrix):
 matrix is LM x Dim
 '''
 def procrustesScaleMatrixForPerson(matrix):
-    ret = np.zeros(matrix.shape)
-    scale = np.zeros(2)
+    ret = matrix
+    dists = np.zeros(matrix.shape[0])
     
-    (ret[:,0], scale[0]) = procrustesScaleVector(matrix[:,0])
-    (ret[:,1], scale[1]) = procrustesScaleVector(matrix[:,1])
+    for l in range(matrix.shape[0]):
+        dists[l] = np.sqrt(matrix[l,0]**2+matrix[l,1]**2)
     
-    return ret, scale
-
-'''
-Takes numpy vector with the values for one persons, different x- or y values of landmarks, and returns a similar vector so that the standard deviation
-of the values becomes 1. Also returns scale.
-'''    
-def procrustesScaleVector(vector):
-    nbL = vector.shape[0]
-    std = np.std(vector)
+    scale = np.std(dists)
     
-    ret = np.zeros(vector.shape)
-    for l in range(nbL):
-        ret[l] = vector[l]/std
-    
-    return ret, 1.0/std
+    return ret/scale, scale
 
 def getEntrywiseProduct(array1,array2):
     result = np.zeros(array1.shape)
