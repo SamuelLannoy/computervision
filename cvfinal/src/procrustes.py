@@ -10,9 +10,20 @@ def procrustesTranslateMatrix(matrix):
     ret = np.zeros(matrix.shape)
     trans = np.zeros((matrix.shape[1],2))
     for p in range(nbP):
-        (ret[:,p,0], trans[p,0]) = procrustesTranslateVector(matrix[:,p,0])
-        (ret[:,p,1], trans[p,1]) = procrustesTranslateVector(matrix[:,p,1])
+        (ret[:,p,:], trans[p,:]) = procrustesTranslateMatrixForPerson(matrix[:,p,:]) 
         
+    return ret, trans
+
+'''
+matrix is LM x Dim
+'''
+def procrustesTranslateMatrixForPerson(matrix):
+    ret = np.zeros(matrix.shape)
+    trans = np.zeros(2)
+    
+    (ret[:,0], trans[0]) = procrustesTranslateVector(matrix[:,0])
+    (ret[:,1], trans[1]) = procrustesTranslateVector(matrix[:,1])
+    
     return ret, trans
 
 '''
@@ -38,10 +49,21 @@ def procrustesScaleMatrix(matrix):
     ret = np.zeros(matrix.shape)
     scales = np.zeros((matrix.shape[1],2))
     for p in range(nbP):
-        (ret[:,p,0], scales[p,0]) = procrustesScaleVector(matrix[:,p,0])
-        (ret[:,p,1], scales[p,1]) = procrustesScaleVector(matrix[:,p,1])
+        (ret[:,p,:], scales[p,:]) = procrustesScaleMatrixForPerson(matrix[:,p,:])
         
     return ret, scales
+
+'''
+matrix is LM x Dim
+'''
+def procrustesScaleMatrixForPerson(matrix):
+    ret = np.zeros(matrix.shape)
+    scale = np.zeros(2)
+    
+    (ret[:,0], scale[0]) = procrustesScaleVector(matrix[:,0])
+    (ret[:,1], scale[1]) = procrustesScaleVector(matrix[:,1])
+    
+    return ret, scale
 
 '''
 Takes numpy vector with the values for one persons, different x- or y values of landmarks, and returns a similar vector so that the standard deviation
@@ -91,12 +113,22 @@ def procrustesRotateMatrix(matrix,target):
     thetas = np.zeros(matrix.shape[1])
     
     for p in range(matrix.shape[1]):
-        thetas[p] = getSmallestSSDAngle(target, matrix[:,p,:])
-        for l in range(matrix.shape[0]):
-            rotated[l,p,0] = matrix[l,p,0]*np.cos(thetas[p]) - matrix[l,p,1]*np.sin(thetas[p])
-            rotated[l,p,1] = matrix[l,p,0]*np.sin(thetas[p]) + matrix[l,p,1]*np.cos(thetas[p])
+        (rotated[:,p,:], thetas[p]) = procrustesRotateMatrixForPerson(matrix[:,p,:], target)
     
     return rotated, thetas
+
+'''
+matrix is LM x Dim
+'''
+def procrustesRotateMatrixForPerson(matrix,target):
+    rotated = np.zeros(matrix.shape)
+    
+    theta = getSmallestSSDAngle(target,matrix)
+    for l in range(matrix.shape[0]):
+        rotated[l,0] = matrix[l,0]*np.cos(theta) - matrix[l,1]*np.sin(theta)
+        rotated[l,1] = matrix[l,0]*np.sin(theta) + matrix[l,1]*np.cos(theta)
+        
+    return rotated, theta
 
 def distance(matrix1,matrix2):
     return (matrix2-matrix1).max()
