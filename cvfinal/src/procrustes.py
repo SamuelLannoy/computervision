@@ -241,4 +241,3 @@ def procrustesMatrix(matrix, maxIts):
         it = it + 1
         
     return itmat
-

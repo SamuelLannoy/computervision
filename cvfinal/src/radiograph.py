@@ -11,10 +11,10 @@ cropX = (1100,1900)
 cropY = (550,1450)
 
 def preprocess(img):
-    cropped = img[cropY[0]:cropY[1],cropX[0]:cropX[1]]
-    denoised = cv2.fastNlMeansDenoising(cropped)
-    clahe = cv2.createCLAHE(clipLimit=5);
-    return clahe.apply(denoised)
+    return img[cropY[0]:cropY[1],cropX[0]:cropX[1]]
+    #denoised = cv2.fastNlMeansDenoising(cropped)
+    #clahe = cv2.createCLAHE(clipLimit=5);
+    #return clahe.apply(denoised)
 
 def sharpen(img):
     kernel = np.array([[0,0,0], [0,1.25,0], [0,0,0]]) - (1/9) * np.array([[1,1,1], [1,1,1], [1,1,1]])

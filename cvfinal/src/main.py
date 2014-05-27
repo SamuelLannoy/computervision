@@ -8,8 +8,8 @@ import init_points
 
 '''
 Creates a tooth matrix from the landmarks in the files.
-A tooth matrix is a Landmark x Person x Dimension matrix,
-with dimension = 0 -> x and dimension = 1 -> y
+A tooth matrix is a Landmark xStacked Person xStacked Dimension matrix,
+with dimension = 0 -> xStacked and dimension = 1 -> y
 '''
 def readLandmarks(toothId, nbPersons, nbLandmarks):
     landmarks = np.zeros((nbLandmarks, nbPersons, 2))
@@ -23,7 +23,7 @@ def readLandmarks(toothId, nbPersons, nbLandmarks):
 
 '''
 Creates an image matrix from the radiographs in the files.
-The resulting matrix is a Person x yDim x xDim matrix.
+The resulting matrix is a Person xStacked yDim xStacked xDim matrix.
 '''
 def readImages(nbPersons):
     xDim = rg.cropX[1] - rg.cropX[0]
@@ -40,7 +40,8 @@ def readData(toothId, nbPersons, nbLandmarks):
     images = np.zeros((nbPersons, yDim, xDim))
     landmarks = np.zeros((nbLandmarks, nbPersons, 2))
     for personId in range(0,nbPersons):
-        images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
+        #images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
+        images[personId] = rg.preprocess(cv2.imread('../data/Segmentations/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '-0.png',0))
         f = open('../data/Landmarks/original/landmarks' 
                  + str(personId+1) + '-' + str(toothId) + '.txt', 'r')
         for landmarkId in range(nbLandmarks): 
@@ -54,13 +55,14 @@ def readData(toothId, nbPersons, nbLandmarks):
 Returns the image to fit from the given person id (15..30)
 '''
 def readImageToFit(personId):
-    return rg.preprocess(cv2.imread('../data/Radiographs/extra/' + str(personId) + '.tif',0))
+    #return rg.preprocess(cv2.imread('../data/Radiographs/0' + str(personId) + '.tif',0))
+    return rg.preprocess(cv2.imread('../data/Segmentations/0' + str(personId) + '-0.png',0))
 
 def fitToothModelToImage(landmarks, images, imageToFit):
     return
 
 '''
-landmarks is LM x Person x Dim
+landmarks is LM xStacked Person xStacked Dim
 '''
 def stackPoints(landmarks):
     return np.vstack((landmarks[:,:,0],landmarks[:,:,1])) 
@@ -79,16 +81,16 @@ def unstackPointsForPerson(stackedLandmarks):
     return np.column_stack((stackedLandmarks[0:columnLength], stackedLandmarks[columnLength:2*columnLength]))
     
 if __name__ == '__main__':
-    n1 = 10
-    n2 = 50
+    nModel = 30
+    nSample = 50
     
-    images, landmarks = readData(2, 8, 40)
-    imageToFit = readImageToFit(15)
+    images, landmarks = readData(1, 5, 40)
+    imageToFit = readImageToFit(1)
     
     processedLandmarks = procrustes.procrustesMatrix(landmarks,0)
     pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
     
-    x = xStriped = np.transpose(pcMean)
+    xStacked = xStriped = np.transpose(pcMean)
     P = np.transpose(pcEigv) # normalized
     
     '''
@@ -99,76 +101,83 @@ if __name__ == '__main__':
     print eVal
     '''
     
-    b = np.zeros_like(xStriped) # Protocol 1: step 1
-    '''
-    Y = np.array([[ 284.,    3.],
-                 [ 279.,   13.],
-                 [ 276.,   24.],
-                 [ 270.,   41.],
-                 [ 267.,   51.],
-                 [ 263.,   64.],
-                 [ 261.,   74.],
-                 [ 259.,   85.],
-                 [ 256.,   97.],
-                 [ 253.,  113.],
-                 [ 251.,  121.],
-                 [ 247.,  135.],
-                 [ 243.,  146.],
-                 [ 239.,  158.],
-                 [ 239.,  172.],
-                 [ 241.,  183.],
-                 [ 238.,  191.],
-                 [ 236.,  209.],
-                 [ 234.,  222.],
-                 [ 248.,  235.],
-                 [ 255.,  247.],
-                 [ 271.,  252.],
-                 [ 284.,  253.],
-                 [ 293.,  245.],
-                 [ 296.,  233.],
-                 [ 298.,  219.],
-                 [ 298.,  202.],
-                 [ 299.,  190.],
-                 [ 305.,  171.],
-                 [ 313.,  153.],
-                 [ 313.,  141.],
-                 [ 319.,  131.],
-                 [ 321.,  117.],
-                 [ 323.,  105.],
-                 [ 327.,   89.],
-                 [ 328.,   72.],
-                 [ 330.,   64.],
-                 [ 332.,   57.],
-                 [ 332.,   50.],
-                 [ 333.,   45.]])
-    '''
+    # Protocol 1: step 1
+    b = np.zeros_like(xStriped) 
+
     # Protocol 1: current found points
-    Y = init_points.getModelPoints(imageToFit)
+    #Y = init_points.getModelPoints(imageToFit)
+    #Y = landmarks[:,0,:]
+    Y = np.array([[ 275.,  197.],
+                 [ 267.,  205.],
+                 [ 259.,  216.],
+                 [ 254.,  228.],
+                 [ 248.,  240.],
+                 [ 244.,  255.],
+                 [ 238.,  266.],
+                 [ 235.,  278.],
+                 [ 229.,  289.],
+                 [ 225.,  303.],
+                 [ 222.,  317.],
+                 [ 219.,  329.],
+                 [ 214.,  345.],
+                 [ 211.,  358.],
+                 [ 208.,  369.],
+                 [ 204.,  387.],
+                 [ 204.,  401.],
+                 [ 206.,  416.],
+                 [ 210.,  430.],
+                 [ 219.,  438.],
+                 [ 233.,  442.],
+                 [ 250.,  446.],
+                 [ 262.,  447.],
+                 [ 275.,  447.],
+                 [ 284.,  441.],
+                 [ 289.,  430.],
+                 [ 295.,  414.],
+                 [ 298.,  396.],
+                 [ 298.,  379.],
+                 [ 297.,  354.],
+                 [ 300.,  335.],
+                 [ 304.,  315.],
+                 [ 307.,  294.],
+                 [ 313.,  273.],
+                 [ 313.,  262.],
+                 [ 312.,  246.],
+                 [ 308.,  229.],
+                 [ 302.,  216.],
+                 [ 299.,  205.],
+                 [ 292.,  199.]])
     
     directions = profile.getDirections(landmarks)
-    model = profile.getModel(images, landmarks, directions, n1)
+    model = profile.getModel(images, landmarks, directions, nModel)
     
     while(1):
         # Protocol 1: step 3 & 4
         y, _ = procrustes.procrustesTranslateMatrixForPerson(Y)
         y, _ = procrustes.procrustesScaleMatrixForPerson(y)
-        y, _ = procrustes.procrustesRotateMatrixForPerson(y, unstackPointsForPerson(x))
+        y, _ = procrustes.procrustesRotateMatrixForPerson(y, unstackPointsForPerson(xStacked))
         
-        # Protocol 1: step 5
-        yStacked = stackPointsForPerson(y) 
-        #yStacked = yStacked/np.dot(np.transpose(yStacked), xStriped) 
+        drawImage = imageToFit.copy()
+        cv2.polylines(drawImage, np.int32([Y]), True, 255) # cv2.cv.Scalar(0,0,255)
+        cv2.imshow('draw', drawImage)
+        cv2.waitKey(0)
+        
+        # Protocol 1: step 5 --> NOT NEEDED??
+        # yStacked = stackPointsForPerson(y) 
+        # yStacked = yStacked/np.dot(np.transpose(yStacked), xStriped)
         
         # Protocol 1: step 6
-        b = np.dot(np.transpose(P), (yStacked - xStriped))
+        b = np.dot(np.transpose(P), (stackPointsForPerson(y) - xStriped))
         
         # Reconstruction / Protocol 1: step 2
-        x = xStriped + np.dot(P, b)
+        xStacked = xStriped + np.dot(P, b)
+        
+        # Plot projection on the model
+        #pt.plotTooth(unstackPointsForPerson(xStacked))
+        #pt.plotTooth(y)
+        #pt.show()
         
         # Create new model
-        Y = profile.getNewModelPoints(imageToFit, Y, model, n2)
-    
-        pt.plotTooth(unstackPointsForPerson(x))
-        pt.plotTooth(unstackPointsForPerson(xStriped))
-        pt.show()
+        Y = profile.getNewModelPoints(imageToFit, Y, model, nSample)
 
     

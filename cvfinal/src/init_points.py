@@ -13,7 +13,8 @@ yPoints = array('f')
 nbModelPoints = 40
 counter = nbModelPoints
 
-def getModelPoints(image):
+def getModelPoints(img):
+    image = img.copy()
     cv2.namedWindow('points')
     cv2.cv.SetMouseCallback('points', mouseCallback, image)
     cv2.imshow('points', image)
@@ -27,16 +28,15 @@ def getModelPoints(image):
         
     return points
 
-def mouseCallback(event, x, y, flags, param):
+def mouseCallback(event, xStacked, y, flags, param):
     global counter
     if event == cv2.cv.CV_EVENT_LBUTTONUP:
         if counter <= 0:
             print 'Enough model points.'
         else:
-            xPoints.append(x)
+            xPoints.append(xStacked)
             yPoints.append(y)
-            cv2.circle(param, (x,y), 3, 255, thickness=-1)
-            print 'x: ' + str(x) + 'y: ' + str(y)
+            cv2.circle(param, (xStacked,y), 3, 255, thickness=-1)
             cv2.imshow('points', param)
             counter = counter - 1
             print str(counter) + ' to go'
