@@ -1,5 +1,8 @@
 import numpy as np
-import plot_teeth as pt
+
+'''
+TRANSLATION
+'''
 
 '''
 Takes toothmatrix (LM x Pers x Dim), and returns a similar one with, for every person, the landmarks in coordinates with an
@@ -16,6 +19,7 @@ def procrustesTranslateMatrix(matrix):
 
 '''
 matrix is LM x Dim
+trans is 2x1
 '''
 def procrustesTranslateMatrixForPerson(matrix):
     ret = np.zeros(matrix.shape)
@@ -38,6 +42,33 @@ def procrustesTranslateVector(vector):
     for l in range(nbL):
         ret[l] = vector[l] - avg
     return ret, -avg
+
+'''
+matrix is LM x Dim
+trans is 2x1
+'''
+def translateMatrixForPerson(matrix, trans):
+    ret = np.zeros(matrix.shape)
+    
+    ret[:,0] = translateVector(matrix[:,0], trans[0])
+    ret[:,1] = translateVector(matrix[:,1], trans[1])
+    
+    return ret
+
+'''
+vector is LM
+trans is a number
+'''
+def translateVector(vector, trans):
+    nbL = vector.shape[0]
+    ret = np.zeros(vector.shape)
+    for l in range(nbL):
+        ret[l] = vector[l] + trans
+    return ret
+
+'''
+SCALING
+'''
 
 '''
 Takes toothmatrix (LM x Pers x Dim), and returns a similar one with, for every person, the landmarks in coordinates scaled so
@@ -66,6 +97,22 @@ def procrustesScaleMatrixForPerson(matrix):
     scale = np.std(dists)
     
     return ret/scale, scale
+    
+'''
+matrix is LM x Dim
+scale is 2x1
+'''
+def scaleMatrixForPerson(matrix, scale):
+    ret = np.zeros(matrix.shape)
+    
+    ret[:,0] = matrix[:,0]*scale[0]
+    ret[:,1] = matrix[:,1]*scale[1]
+    
+    return ret
+
+'''
+ROTATION
+'''
 
 def getEntrywiseProduct(array1,array2):
     result = np.zeros(array1.shape)
@@ -109,14 +156,25 @@ def procrustesRotateMatrix(matrix,target):
 matrix is LM x Dim
 '''
 def procrustesRotateMatrixForPerson(matrix,target):
-    rotated = np.zeros(matrix.shape)
-    
     theta = getSmallestSSDAngle(target,matrix)
+            
+    return rotateMatrixForPerson(matrix,theta), theta
+
+'''
+matrix is LM x Pers x Dim
+theta is a number
+'''
+def rotateMatrixForPerson(matrix,theta):
+    rotated = np.zeros(matrix.shape)
     for l in range(matrix.shape[0]):
         rotated[l,0] = matrix[l,0]*np.cos(theta) - matrix[l,1]*np.sin(theta)
         rotated[l,1] = matrix[l,0]*np.sin(theta) + matrix[l,1]*np.cos(theta)
         
-    return rotated, theta
+    return rotated
+
+'''
+ITERATIVE
+'''
 
 def distance(matrix1,matrix2):
     return (matrix2-matrix1).max()
