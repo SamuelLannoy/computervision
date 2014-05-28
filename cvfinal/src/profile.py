@@ -22,7 +22,9 @@ def getModel(imgs, points, directions, n):
     
     for l in range(points.shape[0]):
         [covars[l], means[l]] = cv2.calcCovarMatrix(profiles[l,:,:]*1.0, cv2.cv.CV_COVAR_NORMAL | cv2.cv.CV_COVAR_ROWS)
-    
+        #covars[l] = np.cov(profiles[l,:,:]*1.0, rowvar=0)
+        #means[l] = np.mean(profiles[l,:,:]*1.0, axis=0)
+
     return covars, means
 
 '''
@@ -36,23 +38,7 @@ def getDirectionsForPerson(points):
     
     middle = np.average(points, 0)
     
-    for l in range(0, points.shape[0]):
-        
-        '''
-        if l == 0:
-            dir1 = (points[0][0]-points[-1][0]) / (points[0][1]-points[-1][1])
-        else:
-            dir1 = (points[l][0]-points[l-1][0]) / (points[l][1]-points[l-1][1])
-        
-        if l == points.shape[0]-1:
-            dir2 = (points[0][0]-points[-1][0]) / (points[0][1]-points[-1][1])
-        else:
-            dir2 = (points[l+1][0]-points[l][0]) / (points[l+1][1]-points[l][1])
-        
-        dirs[l,0] = 1
-        dirs[l,1] = np.tan((np.arctan(dir1) + np.arctan(dir2)) / 2)
-        '''
-        
+    for l in range(0, points.shape[0]):        
         if l == 0:
             dir1 = [points[-1][0]-points[0][0], points[-1][1]-points[0][1]]
         else:
@@ -109,7 +95,7 @@ def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
     prof = img[ys_profile, xs_profile]
     norm = np.linalg.norm(prof, 1)
-    return prof*1.0/norm # typing problem: int <> float
+    return prof*1.0/norm # typing problem: int <> float 
 
 '''
 Returns the profile pixels given the middle point, the direction of the profile and
@@ -136,21 +122,37 @@ def getProfilePixels(point, direction, n):
     for it in range(1,n+1):
         if t_next_x < t_next_y:
             # x-traversion
-            curr_cell_R = (curr_cell_R[0] + 1, curr_cell_R[1])
-            curr_cell_L = (curr_cell_L[0] - 1, curr_cell_L[1])
+            if direction[0] < 0:
+                curr_cell_R = (curr_cell_R[0] - 1, curr_cell_R[1])
+                curr_cell_L = (curr_cell_L[0] + 1, curr_cell_L[1])
+            else:
+                curr_cell_R = (curr_cell_R[0] + 1, curr_cell_R[1])
+                curr_cell_L = (curr_cell_L[0] - 1, curr_cell_L[1])
             t_next_x += delta_x
         elif t_next_y < t_next_x:
             # y-traversion
-            curr_cell_R = (curr_cell_R[0], curr_cell_R[1] + 1)
-            curr_cell_L = (curr_cell_L[0], curr_cell_L[1] - 1)
+            if direction[1] < 0:
+                curr_cell_R = (curr_cell_R[0], curr_cell_R[1] - 1)
+                curr_cell_L = (curr_cell_L[0], curr_cell_L[1] + 1)  
+            else:
+                curr_cell_R = (curr_cell_R[0], curr_cell_R[1] + 1)
+                curr_cell_L = (curr_cell_L[0], curr_cell_L[1] - 1)
             t_next_y += delta_y
         else:
             # traversion through intersection of pixels
-            curr_cell_R = (curr_cell_R[0] + 1, curr_cell_R[1])
-            curr_cell_L = (curr_cell_L[0] - 1, curr_cell_L[1])
+            if direction[0] < 0:
+                curr_cell_R = (curr_cell_R[0] - 1, curr_cell_R[1])
+                curr_cell_L = (curr_cell_L[0] + 1, curr_cell_L[1])
+            else:
+                curr_cell_R = (curr_cell_R[0] + 1, curr_cell_R[1])
+                curr_cell_L = (curr_cell_L[0] - 1, curr_cell_L[1])
             t_next_x += delta_x
-            curr_cell_R = (curr_cell_R[0], curr_cell_R[1] + 1)
-            curr_cell_L = (curr_cell_L[0], curr_cell_L[1] - 1)
+            if direction[1] < 0:
+                curr_cell_R = (curr_cell_R[0], curr_cell_R[1] - 1)
+                curr_cell_L = (curr_cell_L[0], curr_cell_L[1] + 1)  
+            else:
+                curr_cell_R = (curr_cell_R[0], curr_cell_R[1] + 1)
+                curr_cell_L = (curr_cell_L[0], curr_cell_L[1] - 1)
             t_next_y += delta_y
         
         profile_xs[n+it] = curr_cell_R[0]
@@ -170,7 +172,7 @@ def matchProfiles(model, profiles):
     for l in range(profiles.shape[0]):
         covar = model[0][l]
         mean = model[1][l]
-        icovar = np.linalg.pinv(covar, rcond = 1e-14) # machine precision error with standard rcond?
+        icovar = cv2.invert(covar, flags=cv2.DECOMP_SVD)[1]
         
         m = (profiles.shape[1]-1)/2
         n = (model[1].shape[1]-1)/2
@@ -180,7 +182,6 @@ def matchProfiles(model, profiles):
             tMean = translateMean(mean, t, m)
             tIcovar = translateCovar(icovar, t, m)
             dist[t] = cv2.Mahalanobis(profiles[l], tMean, tIcovar)
-        print dist
         tProfiles[l] = m-n-np.argmin(dist)
     
     ''' PROFILE VISUALISATION
@@ -233,16 +234,15 @@ def getNewModelPoints(imageToFit, points, model, n):
 MAIN PROGRAM
 '''    
 if __name__ == '__main__':
-    img1 = cv2.imread('../data/Radiographs/01.tif',0)
-    img2 = cv2.imread('../data/Radiographs/02.tif',0)
-    img3 = cv2.imread('../data/Radiographs/03.tif',0)
-    images, points = main.readData(5, 5, 40)
-    #img = np.array([[1,2,3,4,5],[6,7,8,9,10],[11,12,12,13,14]])
-    #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
+    #img1 = cv2.imread('../data/Radiographs/01.tif',0)
+    #img2 = cv2.imread('../data/Radiographs/02.tif',0)
+    #img3 = cv2.imread('../data/Radiographs/03.tif',0)
+    images, points = main.readData(1, 5, 40)
     dirs = getDirections(points)
-    pt.plotTooth(points[:,1,:])
-    pt.plotTooth(points[:,1,:] + 5*dirs[:,1,:])
-    pt.show()
-    #covars, means = getModel(imgs, points, directions, 2)
+    #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
+    covars, means = getModel(images, points, dirs, 2)
     #print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], directions[:,1,:], 6))
+    #pt.plotTooth(points[:,1,:])
+    #pt.plotTooth(points[:,1,:] + 5*dirs[:,1,:])
+    #pt.show()
 
