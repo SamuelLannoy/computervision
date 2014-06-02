@@ -94,6 +94,10 @@ point is two-tuple
 def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
     prof = img[ys_profile, xs_profile]
+    #prof = np.zeros(2*n+1)
+    #prof[:2*n] = img[ys_profile[:-1], xs_profile[:-1]] - img[ys_profile[1:], xs_profile[1:]]
+    #prof[2*n] = 0
+    #print prof
     norm = np.linalg.norm(prof, 1)
     return prof*1.0/norm # typing problem: int <> float 
 
@@ -189,9 +193,9 @@ def matchProfiles(model, profiles):
     ppl.show()
     ppl.vlines(np.arange(profiles[20].shape[0]), np.zeros_like(profiles[20]), profiles[20])
     ppl.show()
+    print tProfiles
     '''
     
-    print tProfiles
     return tProfiles
             
 '''

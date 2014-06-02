@@ -94,21 +94,15 @@ def procrustesScaleMatrixForPerson(matrix):
     for l in range(matrix.shape[0]):
         dists[l] = np.sqrt(matrix[l,0]**2+matrix[l,1]**2)
     
-    scale = np.std(dists)
+    scale = 1/np.std(dists)
     
-    return ret/scale, scale
+    return ret*scale, scale
     
 '''
 matrix is LM x Dim
-scale is 2x1
 '''
 def scaleMatrixForPerson(matrix, scale):
-    ret = np.zeros(matrix.shape)
-    
-    ret[:,0] = matrix[:,0]*scale[0]
-    ret[:,1] = matrix[:,1]*scale[1]
-    
-    return ret
+    return matrix*scale
 
 '''
 ROTATION
