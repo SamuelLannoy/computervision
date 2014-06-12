@@ -1,9 +1,3 @@
-'''
-Created on 17-mei-2014
-
-@author: samue_000
-'''
-
 import numpy as np
 import cv2
 
@@ -13,7 +7,7 @@ cropY = (550,1450)
 def preprocess(img):
     cropped = img[cropY[0]:cropY[1],cropX[0]:cropX[1]]
     denoised = cv2.fastNlMeansDenoising(cropped)
-    clahe = cv2.createCLAHE(clipLimit=20, tileGridSize=(8,8));
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(8,8));
     return clahe.apply(denoised)
 
 def sharpen(img):
@@ -23,16 +17,12 @@ def sharpen(img):
 '''
 MAIN PROGRAM
 '''
-if __name__ == '__main__':
-    #cv2.imshow('original', img)
-    #cv2.imshow('preprocessed', preprocess(img))
-    #cv2.waitKey(0)
-    
+if __name__ == '__main__':    
     # THIS ROUTINE LET YOU PREPROCESS IMAGES
     number = '01'
     img = cv2.imread('../data/Radiographs/' + number + '.tif',0)
     img = preprocess(img)
-    cv2.imwrite('../data/Radiographs/' + number + 'p2.tif', img)
+    cv2.imwrite('../data/Radiographs/' + number + 'p.tif', img)
     cv2.imshow('preprocessed', img)
     print 'Image ' + number + ' is processed!'
     cv2.waitKey(0)

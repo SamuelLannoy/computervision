@@ -22,8 +22,6 @@ def getModel(imgs, points, directions, n):
     
     for l in range(points.shape[0]):
         [covars[l], means[l]] = cv2.calcCovarMatrix(profiles[l,:,:]*1.0, cv2.cv.CV_COVAR_NORMAL | cv2.cv.CV_COVAR_ROWS)
-        #covars[l] = np.cov(profiles[l,:,:]*1.0, rowvar=0)
-        #means[l] = np.mean(profiles[l,:,:]*1.0, axis=0)
 
     return covars, means
 
@@ -94,10 +92,6 @@ point is two-tuple
 def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
     prof = img[ys_profile, xs_profile]
-    #prof = np.zeros(2*n+1)
-    #prof[:2*n] = img[ys_profile[:-1], xs_profile[:-1]] - img[ys_profile[1:], xs_profile[1:]]
-    #prof[2*n] = 0
-    #print prof
     norm = np.linalg.norm(prof, 1)
     return prof*1.0/norm # typing problem: int <> float 
 
@@ -238,15 +232,11 @@ def getNewModelPoints(imageToFit, points, model, n):
 MAIN PROGRAM
 '''    
 if __name__ == '__main__':
-    #img1 = cv2.imread('../data/Radiographs/01.tif',0)
-    #img2 = cv2.imread('../data/Radiographs/02.tif',0)
-    #img3 = cv2.imread('../data/Radiographs/03.tif',0)
     images, points = main.readData(1, 5, 40)
-    dirs = getDirections(points)
+    #dirs = getDirections(points)
     #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
-    covars, means = getModel(images, points, dirs, 2)
+    #covars, means = getModel(images, points, dirs, 2)
     #print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], directions[:,1,:], 6))
     #pt.plotTooth(points[:,1,:])
     #pt.plotTooth(points[:,1,:] + 5*dirs[:,1,:])
     #pt.show()
-

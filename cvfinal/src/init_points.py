@@ -2,12 +2,6 @@ import numpy as np
 import cv2
 from array import array
 
-'''
-Created on 24-mei-2014
-
-@author: samue_000
-'''
-
 xPoints = array('f')
 yPoints = array('f')
 nbModelPoints = 40
