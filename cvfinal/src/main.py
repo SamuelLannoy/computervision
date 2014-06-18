@@ -21,8 +21,8 @@ def readData(toothId, nbPersons, nbLandmarks):
     images = np.zeros((nbPersons, yDim, xDim))
     landmarks = np.zeros((nbLandmarks, nbPersons, 2))
     for personId in range(0,nbPersons):
-        images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
-        #images[personId] = cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + 'p.tif',0)
+        #images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
+        images[personId] = cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + 'p.tif',0)
         f = open('../data/Landmarks/original/landmarks' 
                  + str(personId+1) + '-' + str(toothId) + '.txt', 'r')
         for landmarkId in range(nbLandmarks): 
@@ -35,7 +35,7 @@ def readData(toothId, nbPersons, nbLandmarks):
 Returns the image to fit from the given person id (15..30)
 '''
 def readImageToFit(personId):
-    return rg.preprocess(cv2.imread('../data/Radiographs/0' + str(personId) + '.tif',0))
+    return rg.preprocess(cv2.imread('../data/Radiographs/extra/' + str(personId) + '.tif',0))
 
 '''
 landmarks is LM xStacked Person xStacked Dim
@@ -86,8 +86,8 @@ if __name__ == '__main__':
     nSample = 30
     
     # Read data (images and landmarks)
-    images, landmarks = readData(1, 14, 40)
-    imageToFit = readImageToFit(1)
+    images, landmarks = readData(5, 14, 40)
+    imageToFit = readImageToFit(28)
     
     # Number of modes
     nbModes = landmarks.shape[1]
