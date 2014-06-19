@@ -5,7 +5,23 @@ import plot_teeth as pt
 import profile
 import radiograph as rg
 import init_points
+import os.path
 
+'''
+Returns a path to the radiograph for the given personId (counting from 0).
+'''
+def radiographPath(personId, preprocessed):
+    path = '../data/Radiographs/'
+    if personId < 10 :
+        path = path + '0' + str(personId+1)
+    elif personId < 15:
+        path = path + str(personId+1)
+    else:
+        path = path + 'extra/' + str(personId+1)
+    
+    if preprocessed: return path + 'p.tif'
+    else: return path + '.tif'
+    
 '''
 Creates a tooth matrix from the landmarks in the files.
 A tooth matrix is a Landmark xStacked Person xStacked Dimension matrix,
@@ -21,8 +37,11 @@ def readData(toothId, nbPersons, nbLandmarks):
     images = np.zeros((nbPersons, yDim, xDim))
     landmarks = np.zeros((nbLandmarks, nbPersons, 2))
     for personId in range(0,nbPersons):
-        #images[personId] = rg.preprocess(cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + '.tif',0))
-        images[personId] = cv2.imread('../data/Radiographs/' + ("0" + str(personId+1) if personId+1 < 10 else str(personId+1)) + 'p.tif',0)
+        # if already preprocessed images are available, turn flag to true
+        preprocessed = True
+        images[personId] = cv2.imread(radiographPath(personId, preprocessed),0)
+        if not preprocessed : images[personId] = rg.preprocess(images[personId])
+        
         f = open('../data/Landmarks/original/landmarks' 
                  + str(personId+1) + '-' + str(toothId) + '.txt', 'r')
         for landmarkId in range(nbLandmarks): 
@@ -32,10 +51,14 @@ def readData(toothId, nbPersons, nbLandmarks):
     return images, landmarks
 
 '''
-Returns the image to fit from the given person id (15..30)
+Returns the image to fit from the given person id (normally 15..30)
 '''
 def readImageToFit(personId):
-    return rg.preprocess(cv2.imread('../data/Radiographs/extra/' + str(personId) + '.tif',0))
+    # if already preprocessed images are available, turn flag to true
+    preprocessed = True
+    image = cv2.imread(radiographPath(personId, preprocessed),0)
+    if preprocessed : return image
+    else : return rg.preprocess(image)
 
 '''
 landmarks is LM xStacked Person xStacked Dim
@@ -81,20 +104,27 @@ def alignShapes(x1, x2):
 MAIN PROGRAM
 '''
 if __name__ == '__main__':
+    
+    debugFB  = True
+    
     # Choice of profile length (2n+1)
     nModel = 20
     nSample = 30
     
     # Read data (images and landmarks)
     images, landmarks = readData(5, 14, 40)
-    imageToFit = readImageToFit(28)
+    if debugFB : print 'DB: Images and landmarks loaded'
+    imageToFit = readImageToFit(0)
+    if debugFB : print 'DB: Image to fit loaded'
     
     # Number of modes
     nbModes = landmarks.shape[1]
     
     # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
-    processedLandmarks = procrustes.procrustesMatrix(landmarks,0)
+    processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
+    if debugFB : print 'DB: Procrustes ready'
     pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
+    if debugFB : print 'DB: PCA ready'
     xStacked = xStriped = np.transpose(pcMean)
     P = np.transpose(pcEigv[:nbModes]) # normalized
     covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
