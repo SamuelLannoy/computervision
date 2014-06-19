@@ -12,9 +12,9 @@ Returns a path to the radiograph for the given personId (counting from 0).
 '''
 def radiographPath(personId, preprocessed):
     path = '../data/Radiographs/'
-    if personId < 10 :
+    if personId < 9 :
         path = path + '0' + str(personId+1)
-    elif personId < 15:
+    elif personId < 14:
         path = path + str(personId+1)
     else:
         path = path + 'extra/' + str(personId+1)
@@ -38,9 +38,10 @@ def readData(toothId, nbPersons, nbLandmarks):
     landmarks = np.zeros((nbLandmarks, nbPersons, 2))
     for personId in range(0,nbPersons):
         # if already preprocessed images are available, turn flag to true
-        preprocessed = True
-        images[personId] = cv2.imread(radiographPath(personId, preprocessed),0)
-        if not preprocessed : images[personId] = rg.preprocess(images[personId])
+        preprocessed = False
+        path = radiographPath(personId, preprocessed)
+        if preprocessed : images[personId] = cv2.imread(path,0)
+        else : images[personId] = rg.preprocess(cv2.imread(path,0))
         
         f = open('../data/Landmarks/original/landmarks' 
                  + str(personId+1) + '-' + str(toothId) + '.txt', 'r')
@@ -55,7 +56,7 @@ Returns the image to fit from the given person id (normally 15..30)
 '''
 def readImageToFit(personId):
     # if already preprocessed images are available, turn flag to true
-    preprocessed = True
+    preprocessed = False
     image = cv2.imread(radiographPath(personId, preprocessed),0)
     if preprocessed : return image
     else : return rg.preprocess(image)
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     if debugFB : print 'DB: Images and landmarks loaded'
     imageToFit = readImageToFit(0)
     if debugFB : print 'DB: Image to fit loaded'
-    
+
     # Number of modes
     nbModes = landmarks.shape[1]
     
@@ -129,7 +130,7 @@ if __name__ == '__main__':
     P = np.transpose(pcEigv[:nbModes]) # normalized
     covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
     eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
-    
+        
     # Initialization of the initial points
     X = init_points.getModelPoints(imageToFit)
     

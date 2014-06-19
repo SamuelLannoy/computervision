@@ -24,7 +24,11 @@ def getModelPoints(matched):
 
 def mouseCallback(event, xStacked, y, flags, param):
     global counter
+    
+    debugFB = False
+    
     if event == cv2.cv.CV_EVENT_LBUTTONUP:
+        if debugFB : print 'DB: clicked on (' + str(xStacked) + ', ' + str(y) + ')'
         if counter <= 0:
             print 'Enough model points.'
         else:

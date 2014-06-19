@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 cropX = (1100,1900)
-cropY = (550,1450)
+cropY = (650,1350)
 
 def preprocess(matched):
     cropped = matched[cropY[0]:cropY[1],cropX[0]:cropX[1]]
