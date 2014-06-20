@@ -1,8 +1,6 @@
 import numpy as np
 import cv2
 import main
-import matplotlib.pyplot as ppl
-import plot_teeth as pt
 
 np.set_printoptions(threshold='nan')
 
@@ -91,6 +89,8 @@ point is two-tuple
 '''
 def getProfileForPersonAndLandmark(matched, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
+    #print 'DB: profilepixels \n    (' + str(xs_profile) + ', ' + str(ys_profile) + ')'
+    #print 'DB  shape (' + str(matched.shape[0]) + ', ' + str(matched.shape[1]) + ')'
     prof = matched[ys_profile, xs_profile]
     norm = np.linalg.norm(prof, 1)
     return prof*1.0/norm # typing problem: int <> float 

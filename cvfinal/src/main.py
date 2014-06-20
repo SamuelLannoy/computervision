@@ -1,65 +1,23 @@
 import cv2
 import numpy as np
-import procrustes
-import plot_teeth as pt
-import profile
-import radiograph as rg
-import init_points
-import os.path
 
-'''
-Returns a path to the radiograph for the given personId (counting from 0).
-'''
-def radiographPath(personId, preprocessed):
-    path = '../data/Radiographs/'
-    if personId < 9 :
-        path = path + '0' + str(personId+1)
-    elif personId < 14:
-        path = path + str(personId+1)
-    else:
-        path = path + 'extra/' + str(personId+1)
-    
-    if preprocessed: return path + 'p.tif'
-    else: return path + '.tif'
+import radiograph as rg
+import landmarks as lm
+
+import init_points
+import procrustes
+import profile
     
 '''
 Creates a tooth matrix from the landmarks in the files.
-A tooth matrix is a Landmark xStacked Person xStacked Dimension matrix,
-with dimension = 0 -> xStacked and dimension = 1 -> y
+A tooth matrix is a Landmark x Person x Dimension matrix,
+with dimension = 0 -> x and dimension = 1 -> y
 
 Creates an image matrix from the radiographs in the files.
-The resulting matrix is a Person xStacked yDim xStacked xDim matrix.
+The resulting matrix is a Person x yDim x xDim matrix.
 '''
-def readData(toothId, nbPersons, nbLandmarks):
-    xDim = rg.cropX[1] - rg.cropX[0]
-    yDim = rg.cropY[1] - rg.cropY[0]
-    
-    images = np.zeros((nbPersons, yDim, xDim))
-    landmarks = np.zeros((nbLandmarks, nbPersons, 2))
-    for personId in range(0,nbPersons):
-        # if already preprocessed images are available, turn flag to true
-        preprocessed = False
-        path = radiographPath(personId, preprocessed)
-        if preprocessed : images[personId] = cv2.imread(path,0)
-        else : images[personId] = rg.preprocess(cv2.imread(path,0))
-        
-        f = open('../data/Landmarks/original/landmarks' 
-                 + str(personId+1) + '-' + str(toothId) + '.txt', 'r')
-        for landmarkId in range(nbLandmarks): 
-            landmarks[landmarkId, personId, 0] = float(f.readline()) - rg.cropX[0]
-            landmarks[landmarkId, personId, 1] = float(f.readline()) - rg.cropY[0]
-            
-    return images, landmarks
-
-'''
-Returns the image to fit from the given person id (normally 15..30)
-'''
-def readImageToFit(personId):
-    # if already preprocessed images are available, turn flag to true
-    preprocessed = False
-    image = cv2.imread(radiographPath(personId, preprocessed),0)
-    if preprocessed : return image
-    else : return rg.preprocess(image)
+def readData(toothId, personIds, nbLandmarks):
+    return rg.readRadiographs(personIds), lm.readLandmarksOfTooth(toothId, personIds, nbLandmarks)
 
 '''
 landmarks is LM xStacked Person xStacked Dim
@@ -109,13 +67,13 @@ if __name__ == '__main__':
     debugFB  = True
     
     # Choice of profile length (2n+1)
-    nModel = 20
-    nSample = 30
+    nModel = 8
+    nSample = 12
     
     # Read data (images and landmarks)
-    images, landmarks = readData(5, 14, 40)
+    images, landmarks = readData(0, np.array(range(14)), 40)
     if debugFB : print 'DB: Images and landmarks loaded'
-    imageToFit = readImageToFit(0)
+    imageToFit = rg.readRadioGraph(0)
     if debugFB : print 'DB: Image to fit loaded'
 
     # Number of modes

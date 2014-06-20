@@ -1,5 +1,8 @@
 import numpy as np
 import cv2
+
+import radiograph as rg
+import main
 from array import array
 
 xPoints = array('f')
@@ -8,9 +11,13 @@ nbModelPoints = 40
 counter = nbModelPoints
 
 def getModelPoints(matched):
+    return getModelPointsManually(matched)
+
+def getModelPointsManually(matched):
     image = matched.copy()
     cv2.namedWindow('points')
     cv2.cv.SetMouseCallback('points', mouseCallback, image)
+    #image = cv2.resize(image, (0,0), fx=0.5, fy=0.5) #this line scales the image before showing, if used remember to unscale the clicked points
     cv2.imshow('points', image)
     cv2.waitKey(0)
     
@@ -39,3 +46,23 @@ def mouseCallback(event, xStacked, y, flags, param):
             counter = counter - 1
             print str(counter) + ' to go'
             
+def getModelPointsAutomatically(matched):
+    image = matched.copy()
+    
+    y_min = np.argmin(np.average(image, 1))
+    line = np.int32([np.array([[0,y_min],[image.shape[1]-1, y_min]])])
+    
+    cv2.polylines(image, line, False, 255)
+    
+    cv2.imshow('result', image)
+    cv2.waitKey(0)
+    
+'''
+MAIN PROGRAM
+'''
+if __name__ == '__main__':
+    for i in range(30):
+        image = rg.readRadioGraph(i)
+        print str(i+1)
+        getModelPointsAutomatically(image)
+
