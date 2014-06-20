@@ -7,17 +7,6 @@ import landmarks as lm
 import init_points
 import procrustes
 import profile
-    
-'''
-Creates a tooth matrix from the landmarks in the files.
-A tooth matrix is a Landmark x Person x Dimension matrix,
-with dimension = 0 -> x and dimension = 1 -> y
-
-Creates an image matrix from the radiographs in the files.
-The resulting matrix is a Person x yDim x xDim matrix.
-'''
-def readData(toothId, personIds, nbLandmarks):
-    return rg.readRadiographs(personIds), lm.readLandmarksOfTooth(toothId, personIds, nbLandmarks)
 
 '''
 landmarks is LM x Pers x Dim
@@ -44,8 +33,9 @@ def unstackPointsForPerson(stackedLandmarks):
     columnLength = stackedLandmarks.shape[0]/2
     return np.column_stack((stackedLandmarks[0:columnLength], stackedLandmarks[columnLength:2*columnLength]))
 
-#TODO: deze methode naar procrustes
 '''
+TODO: deze methode naar procrustes
+
 Aligns the given shapes with each other.
 Returning scale [0] and rotation [1].
 
@@ -74,16 +64,24 @@ if __name__ == '__main__':
     debugFB  = True
     
     # Choice of profile length (2n+1)
-    nModel = 8
-    nSample = 12
+    nModel = 20
+    nSample = 30
+    
+    # Choice of parameters
+    nbLandmarks = 40
+    toothId = 0
+    trainingPersonIds = np.array(range(14))
+    personToFitId = 0
     
     # Read data (images and landmarks)
-    images, landmarks = readData(0, np.array(range(14)), 40)
-    if debugFB : print 'DB: Images and landmarks loaded'
-    imageToFit = rg.readRadioGraph(0)
+    landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds, nbLandmarks)
+    if debugFB : print 'DB: Landmarks loaded'
+    images = rg.readRadiographs(trainingPersonIds)
+    if debugFB : print 'DB: Training radiographs loaded'
+    imageToFit = rg.readRadioGraph(personToFitId)
     if debugFB : print 'DB: Image to fit loaded'
 
-    # Number of modes
+    # Choice of number of modes
     nbModes = landmarks.shape[1]
     
     # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.

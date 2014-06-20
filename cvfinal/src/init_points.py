@@ -2,13 +2,13 @@ import numpy as np
 import cv2
 
 import radiograph as rg
-import main
 from array import array
 
 xPoints = array('f')
 yPoints = array('f')
 nbModelPoints = 40
 counter = nbModelPoints
+scale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 
 def getModelPoints(matched):
     return getModelPointsManually(matched)
@@ -16,32 +16,34 @@ def getModelPoints(matched):
 def getModelPointsManually(matched):
     image = matched.copy()
     cv2.namedWindow('points')
+    image = cv2.resize(image, (0,0), fx=scale, fy=scale)
+    
     cv2.cv.SetMouseCallback('points', mouseCallback, image)
-    #image = cv2.resize(image, (0,0), fx=0.5, fy=0.5) #this line scales the image before showing, if used remember to unscale the clicked points
+    
     cv2.imshow('points', image)
     cv2.waitKey(0)
     
     pointsLength = len(xPoints)
     points = np.zeros((pointsLength, 2))
     for i in range(pointsLength):
-        points[i,0] = xPoints[i]
-        points[i,1] = yPoints[i]
+        points[i,0] = xPoints[i]/scale
+        points[i,1] = yPoints[i]/scale
         
     return points
 
-def mouseCallback(event, xStacked, y, flags, param):
+def mouseCallback(event, x, y, flags, param):
     global counter
     
     debugFB = False
     
     if event == cv2.cv.CV_EVENT_LBUTTONUP:
-        if debugFB : print 'DB: clicked on (' + str(xStacked) + ', ' + str(y) + ')'
+        if debugFB : print 'DB: clicked on (' + str(x) + ', ' + str(y) + ')'
         if counter <= 0:
             print 'Enough model points.'
         else:
-            xPoints.append(xStacked)
+            xPoints.append(x)
             yPoints.append(y)
-            cv2.circle(param, (xStacked,y), 3, 255, thickness=-1)
+            cv2.circle(param, (x,y), 3, 255, thickness=-1)
             cv2.imshow('points', param)
             counter = counter - 1
             print str(counter) + ' to go'

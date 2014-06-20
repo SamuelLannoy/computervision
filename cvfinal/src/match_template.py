@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
-import main
+
+import radiograph as rg
+import landmarks as lm
 import procrustes as procru
 
 '''
@@ -30,11 +32,17 @@ def createTemplate(image, landmarks):
 def testCreateTemplate():
     for personId in range(14):
         print str(personId+1)
-        image, landmarks = createTemplate(cv2.imread(main.radiographPath(personId, True),0), main.readLandmarksOfPerson(personId, 40))
+        image, landmarks = createTemplate(cv2.imread(rg.radiographPath(personId, True),0), lm.readLandmarksOfPerson(personId, 40))
         for toothId in range(8):
             cv2.polylines(image, np.int32([landmarks[toothId,:,:]]), True, 255)
         cv2.imshow('result', image)
         cv2.waitKey(0)
+
+'''
+Returns a tuple (Delta_X, Delta_Y) which is the location of the template image in the given image.
+'''
+def matchTemplate(templImage, image):
+    return 0
 
 if __name__ == '__main__':
     testCreateTemplate()
