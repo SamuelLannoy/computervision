@@ -3,6 +3,9 @@ import radiograph as rg
 
 '''
 Returns a matrix of the form LM x Pers x Dim, representing a given tooth for the given persons.
+
+Translates the landmarks to match the cropped images (preprocessing)
+
 All Id's counting from 0
 '''
 def readLandmarksOfTooth(toothId, personIds, nbLandmarks):

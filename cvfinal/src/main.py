@@ -20,24 +20,31 @@ def readData(toothId, personIds, nbLandmarks):
     return rg.readRadiographs(personIds), lm.readLandmarksOfTooth(toothId, personIds, nbLandmarks)
 
 '''
-landmarks is LM xStacked Person xStacked Dim
+landmarks is LM x Pers x Dim
+
+output is LM*Dim x Pers
 '''
 def stackPoints(landmarks):
     return np.vstack((landmarks[:,:,0],landmarks[:,:,1])) 
 
 '''
-landmarks is LM * Dim
+landmarks is LM x Dim
+
+output is LM*Dim
 '''
 def stackPointsForPerson(landmarks):
     return np.vstack((np.transpose([landmarks[:,0]]),np.transpose([landmarks[:,1]]))) 
 
 '''
-stackedLandmarks is 2*LM
+stackedLandmarks is LM*Dim
+
+output is LM x Dim
 '''
 def unstackPointsForPerson(stackedLandmarks):
     columnLength = stackedLandmarks.shape[0]/2
     return np.column_stack((stackedLandmarks[0:columnLength], stackedLandmarks[columnLength:2*columnLength]))
 
+#TODO: deze methode naar procrustes
 '''
 Aligns the given shapes with each other.
 Returning scale [0] and rotation [1].
