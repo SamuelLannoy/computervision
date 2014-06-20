@@ -10,9 +10,9 @@ nbModelPoints = 40
 counter = nbModelPoints
 scale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 
-def getModelPoints(matched):
-    return getModelPointsManually(matched)
-
+'''
+Returns initial points (Point x Dim) for the given image with manually clikcing them.
+'''
 def getModelPointsManually(matched):
     image = matched.copy()
     cv2.namedWindow('points')
@@ -31,6 +31,9 @@ def getModelPointsManually(matched):
         
     return points
 
+'''
+Catches mouse click for manual initialization.
+'''
 def mouseCallback(event, x, y, flags, param):
     global counter
     
@@ -47,10 +50,18 @@ def mouseCallback(event, x, y, flags, param):
             cv2.imshow('points', param)
             counter = counter - 1
             print str(counter) + ' to go'
-            
-def getModelPointsAutomatically(matched):
-    image = matched.copy()
-    
+
+'''
+Returns initial points (Point x Dim) for the given image with automatic searching.
+'''            
+def getModelPointsAutomatically(image):
+    return 0
+    #TODO
+
+'''
+Finds the middle of the teeth by finding the darkest horizontal line in the image.
+'''
+def getVerticalMiddleOfTeeth(image):
     y_min = np.argmin(np.average(image, 1))
     line = np.int32([np.array([[0,y_min],[image.shape[1]-1, y_min]])])
     
@@ -58,7 +69,13 @@ def getModelPointsAutomatically(matched):
     
     cv2.imshow('result', image)
     cv2.waitKey(0)
-    
+
+'''
+Returns initial points (Point x Dim) for the given image.
+'''
+def getModelPoints(image):
+    return getModelPointsManually(image)
+
 '''
 MAIN PROGRAM
 '''
@@ -66,5 +83,4 @@ if __name__ == '__main__':
     for i in range(30):
         image = rg.readRadioGraph(i)
         print str(i+1)
-        getModelPointsAutomatically(image)
-
+        getVerticalMiddleOfTeeth(image)
