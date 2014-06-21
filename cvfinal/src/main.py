@@ -8,6 +8,20 @@ import init_points
 import procrustes
 import profile
 
+# Choice of technical parameters
+debugFB  = True
+windowscale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
+
+# Choice of profile length (2n+1)
+nModel = 20
+nSample = 30
+
+# Choice of parameters (all Id's count from 0)
+nbLandmarks = 40
+trainingPersonIds = np.array(range(14))
+personToFitId = 23
+toothIds = np.array(range(8))
+
 '''
 landmarks is LM x Pers x Dim
 
@@ -55,123 +69,129 @@ def alignShapes(x1, x2):
     b /= x1_norm_sq
     
     return np.sqrt(a**2 + b**2), np.arctan2(b, a)
-    
+
+'''
+Copies the given image and shows a scaled version of the copy.
+'''
+def showScaled(image, scale, name, wait):
+    showed = image.copy()
+    showed = cv2.resize(showed, (0,0), fx=scale, fy=scale)
+    cv2.imshow(name, showed)
+    if wait : cv2.waitKey(0)
+  
 '''
 MAIN PROGRAM
 '''
 if __name__ == '__main__':
     
-    debugFB  = True
-    
-    # Choice of profile length (2n+1)
-    nModel = 20
-    nSample = 30
-    
-    # Choice of parameters
-    nbLandmarks = 40
-    toothId = 0
-    trainingPersonIds = np.array(range(14))
-    personToFitId = 0
-    
-    # Read data (images and landmarks)
-    landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds, nbLandmarks)
-    if debugFB : print 'DB: Landmarks loaded'
     images = rg.readRadiographs(trainingPersonIds)
     if debugFB : print 'DB: Training radiographs loaded'
     imageToFit = rg.readRadioGraph(personToFitId)
     if debugFB : print 'DB: Image to fit loaded'
-
-    # Choice of number of modes
-    nbModes = landmarks.shape[1]
     
-    # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
-    processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
-    if debugFB : print 'DB: Procrustes ready'
-    pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
-    if debugFB : print 'DB: PCA ready'
-    xStacked = xStriped = np.transpose(pcMean)
-    P = np.transpose(pcEigv[:nbModes]) # normalized
-    covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
-    eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
-        
-    # Initialization of the initial points
-    X = init_points.getModelPoints(imageToFit)
+    contourImage = imageToFit.copy()
+    segmentsImage = np.zeros_like(np.array(imageToFit))
     
-    # Draw the initial points
-    drawImage = imageToFit.copy()
-    cv2.polylines(drawImage, np.int32([X]), True, 255)
-    cv2.imshow('draw', drawImage)
-    cv2.waitKey(0)
+    for i in range(toothIds.shape[0]):
+        toothId = toothIds[i]
+        # Read data (images and landmarks)
+        landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds, nbLandmarks)
+        if debugFB : print 'DB: Landmarks loaded for tooth #' + str(toothId+1)
     
-    # Initialize the model
-    directions = profile.getDirections(landmarks)
-    model = profile.getModel(images, landmarks, directions, nModel)
-    
-    ## Protocol 1: step 1 (initialize shape parameters)
-    b = np.zeros((nbModes,1))
-    prev_b = b
-
-    stop = False
-    it = 1
-    while(not stop): 
+        # Choice of number of modes
+        nbModes = landmarks.shape[1]
         
-        # Protocol 2: step 1 (examine region around each point to find best nearby match)
-        Y = profile.getNewModelPoints(imageToFit, X, model, nSample)
+        # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
+        processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
+        if debugFB : print 'DB: Procrustes ready for tooth #' + str(toothId+1)
+        pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
+        if debugFB : print 'DB: PCA ready for tooth #' + str(toothId+1)
         
-        # Protocol 2: step 3 = protocol 1
+        xStacked = xStriped = np.transpose(pcMean)
+        P = np.transpose(pcEigv[:nbModes]) # normalized
+        covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
+        eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
         
-        ## Protocol 1: step 2 (generate model point positions)
-        xStacked = xStriped + np.dot(P, b)
-
-        ## Protocol 1: step 3 & 4 (project Y into the model coordinate frame)
-        y, translation = procrustes.procrustesTranslateMatrixForPerson(Y)
-        scale, rotation = alignShapes(unstackPointsForPerson(xStacked), y)
-        scale = 1/scale
-        rotation = -rotation
         
-        y = procrustes.scaleMatrixForPerson(y, scale)
-        y = procrustes.rotateMatrixForPerson(y, rotation)
+        # Initialization of the initial points
+        X = init_points.getModelPoints(imageToFit, toothId)
         
-        ## Protocol 1: step 5 --> NOT NEEDED??
-        #yStacked = stackPointsForPerson(y) 
-        #yStacked = yStacked/np.dot(np.transpose(yStacked), xStriped)
-        #y = unstackPointsForPerson(yStacked)
+        # Draw the initial points
+        initialImage = imageToFit.copy()
+        cv2.polylines(initialImage, np.int32([X]), True, 255)
+        showScaled(initialImage, windowscale, 'initial', False)
         
-        ## Protocol 1: step 6 (update model parameters)
-        b = np.dot(np.transpose(P), (stackPointsForPerson(y) - xStriped))
+        # Initialize the model
+        directions = profile.getDirections(landmarks)
+        model = profile.getModel(images, landmarks, directions, nModel)
         
-        # Protocol 2: step 3 (apply constraints to b)
-        for i in range(b.shape[0]):
-            if np.abs(b[i,0]) > 3*np.sqrt(eigval[i]):
-                b[i,0] = np.sign(b[i,0]) * 3*np.sqrt(eigval[i])
-        
-        # Calculate difference with previous result
-        # and stop iterating after a certain treshold
-        differences = prev_b - b
+        ## Protocol 1: step 1 (initialize shape parameters)
+        b = np.zeros((nbModes,1))
         prev_b = b
-        
-        stop = True
-        for diff in differences:
-            if np.abs(diff) > 0.01:
-                stop = False
-                
-        it += 1
-        
-    print "Number of iterations: " + str(it)
     
-    # Draw the model on the radiograph
-    x = unstackPointsForPerson(xStriped + np.dot(P, b))
-    X = procrustes.rotateMatrixForPerson(x, -rotation)
-    X = procrustes.scaleMatrixForPerson(X, 1/scale)
-    X = procrustes.translateMatrixForPerson(X, -translation)
-    
-    drawImage = imageToFit.copy()
-    cv2.polylines(drawImage, np.int32([X]), True, 255)
-    cv2.imshow('draw', drawImage)
-    cv2.waitKey(0)
+        stop = False
+        it = 1
+        while(not stop): 
             
-    # Plot projection on the model
-    #pt.plotTooth(x)
-    #pt.plotTooth(y)
-    #pt.plotTooth(unstackPointsForPerson(xStriped))
-    #pt.show()
+            # Protocol 2: step 1 (examine region around each point to find best nearby match)
+            Y = profile.getNewModelPoints(imageToFit, X, model, nSample)
+            
+            # Protocol 2: step 3 = protocol 1
+            
+            ## Protocol 1: step 2 (generate model point positions)
+            xStacked = xStriped + np.dot(P, b)
+    
+            ## Protocol 1: step 3 & 4 (project Y into the model coordinate frame)
+            y, translation = procrustes.procrustesTranslateMatrixForPerson(Y)
+            scale, rotation = alignShapes(unstackPointsForPerson(xStacked), y)
+            scale = 1/scale
+            rotation = -rotation
+            
+            y = procrustes.scaleMatrixForPerson(y, scale)
+            y = procrustes.rotateMatrixForPerson(y, rotation)
+            
+            ## Protocol 1: step 5 --> NOT NEEDED??
+            #yStacked = stackPointsForPerson(y) 
+            #yStacked = yStacked/np.dot(np.transpose(yStacked), xStriped)
+            #y = unstackPointsForPerson(yStacked)
+            
+            ## Protocol 1: step 6 (update model parameters)
+            b = np.dot(np.transpose(P), (stackPointsForPerson(y) - xStriped))
+            
+            # Protocol 2: step 3 (apply constraints to b)
+            for i in range(b.shape[0]):
+                if np.abs(b[i,0]) > 3*np.sqrt(eigval[i]):
+                    b[i,0] = np.sign(b[i,0]) * 3*np.sqrt(eigval[i])
+            
+            
+            # Calculate difference with previous result
+            # and stop iterating after a certain threshold
+            differences = prev_b - b
+            prev_b = b
+            
+            stop = True
+            for diff in differences:
+                if np.abs(diff) > 0.01:
+                    stop = False
+                    
+            it += 1
+            
+        if debugFB : print 'DB: Tooth #' + str(toothId+1) + ' finished in ' + str(it) + ' iterations.'
+        
+        # Draw the model on the radiograph
+        x = unstackPointsForPerson(xStriped + np.dot(P, b))
+        X = procrustes.rotateMatrixForPerson(x, -rotation)
+        X = procrustes.scaleMatrixForPerson(X, 1/scale)
+        X = procrustes.translateMatrixForPerson(X, -translation)
+        
+        cv2.polylines(contourImage, np.int32([X]), True, 255)
+        showScaled(contourImage, windowscale, 'contours', False)
+        
+        cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
+        showScaled(segmentsImage, windowscale, 'segments', True)
+                
+        # Plot projection on the model
+        #pt.plotTooth(x)
+        #pt.plotTooth(y)
+        #pt.plotTooth(unstackPointsForPerson(xStriped))
+        #pt.show()

@@ -39,13 +39,50 @@ def testCreateTemplate():
         cv2.waitKey(0)
 
 '''
-Returns a tuple (Delta_X, Delta_Y) which is the location of the template image in the given image.
+Returns a triplet (Delta_X, Delta_Y, score) which is the best matching location of the template image in the given image
+and the score of that match.
 '''
-def matchTemplate(templImage, image):
-    return 0
+def matchTemplate(image, templImage):
+    matches = cv2.matchTemplate(image, templImage, cv2.cv.CV_TM_CCORR_NORMED)
+    '''
+    cv2.imshow('matches', matches)
+    cv2.waitKey(0)
+    '''
+    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matches)
+    return maxLoc[0], maxLoc[1], maxVal
+
+def testMatchTemplate():
+    for personId in range(14,30):
+        image = rg.readRadioGraph(personId)
+        
+        chosenScr = 0
+        for templId in range(14):
+            template = createTemplate(rg.readRadioGraph(templId), lm.readLandmarksOfPerson(templId, 40))
+            x, y, scr = matchTemplate(image, template[0])
+            if scr > chosenScr:
+                chosenScr = scr
+                chosenX = x
+                chosenY = y
+                chosenTemplate = template
+                chosenTemplId = templId
+                
+        print (personId, chosenTemplId)
+        
+        combined = image.copy()
+        combined[x:x+template[0].shape[0], y:y+template[0].shape[1]] = template[0]
+        cv2.circle(combined, (y,x), 3, 255, thickness=-1)
+        cv2.imshow('combined', combined)
+        
+        init_image = image.copy()
+        for toothId in range(8):
+            init_points = procru.translateMatrixForPerson(chosenTemplate[1][toothId,:,:], np.array([[chosenX],[chosenY]]))
+            cv2.polylines(init_image, np.int32([init_points]), True, 255)
+        cv2.imshow('init_image',init_image)
+        cv2.waitKey(0)
 
 if __name__ == '__main__':
-    testCreateTemplate()
+    testMatchTemplate()
+    
     
     '''
     personId = 6
