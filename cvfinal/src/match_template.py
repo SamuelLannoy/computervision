@@ -18,10 +18,10 @@ The given image is presumed to be preprocessed, ie. no extra preprocessing will 
 The given landmarks are presumed to be in the coordinate system of the image.
 '''
 def createTemplate(image, landmarks):
-    minX = landmarks[:,:,0].min()-20
-    maxX = landmarks[:,:,0].max()+20
-    minY = landmarks[:,:,1].min()-20
-    maxY = landmarks[:,:,1].max()+20
+    minX = landmarks[:,:,0].min()-10
+    maxX = landmarks[:,:,0].max()+10
+    minY = landmarks[:,:,1].min()-10
+    maxY = landmarks[:,:,1].max()+10
     
     image = image[minY:maxY,minX:maxX]
     

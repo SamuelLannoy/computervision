@@ -13,8 +13,8 @@ debugFB  = True
 windowscale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 
 # Choice of profile length (2n+1)
-nModel = 20
-nSample = 30
+nModel = 15
+nSample = 40
 
 # Choice of template score loyalty (for template matching in init_points) (higher means higher loyalty of the
 #  returned average tooth to templates with a better score
