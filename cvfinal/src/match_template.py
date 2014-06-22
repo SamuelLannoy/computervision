@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+import main
 import radiograph as rg
 import landmarks as lm
 import procrustes as procru
@@ -32,9 +33,9 @@ def createTemplate(image, landmarks):
 def testCreateTemplate():
     for personId in range(14):
         print str(personId+1)
-        image, landmarks = createTemplate(cv2.imread(rg.radiographPath(personId, True),0), lm.readLandmarksOfPerson(personId, 40))
-        for toothId in range(8):
-            cv2.polylines(image, np.int32([landmarks[toothId,:,:]]), True, 255)
+        image, landmarks = createTemplate(cv2.imread(rg.radiographPath(personId, True),0), lm.readLandmarksOfPerson(personId))
+        for toothId in range(main.toothIds.shape[0]):
+            cv2.polylines(image, np.int32([landmarks[:,toothId,:]]), True, 255)
         cv2.imshow('result', image)
         cv2.waitKey(0)
 
@@ -52,37 +53,8 @@ def matchTemplate(image, templImage):
     _, maxVal, _, maxLoc = cv2.minMaxLoc(matches)
     return maxLoc[0], maxLoc[1], maxVal
 
-def testMatchTemplate():
-    for personId in range(14,30):
-        image = rg.readRadioGraph(personId)
-        
-        chosenScr = 0
-        for templId in range(14):
-            template = createTemplate(rg.readRadioGraph(templId), lm.readLandmarksOfPerson(templId, 40))
-            x, y, scr = matchTemplate(image, template[0])
-            if scr > chosenScr:
-                chosenScr = scr
-                chosenX = x
-                chosenY = y
-                chosenTemplate = template
-                chosenTemplId = templId
-                
-        print (personId, chosenTemplId)
-        
-        combined = image.copy()
-        combined[x:x+template[0].shape[0], y:y+template[0].shape[1]] = template[0]
-        cv2.circle(combined, (y,x), 3, 255, thickness=-1)
-        cv2.imshow('combined', combined)
-        
-        init_image = image.copy()
-        for toothId in range(8):
-            init_points = procru.translateMatrixForPerson(chosenTemplate[1][toothId,:,:], np.array([[chosenX],[chosenY]]))
-            cv2.polylines(init_image, np.int32([init_points]), True, 255)
-        cv2.imshow('init_image',init_image)
-        cv2.waitKey(0)
-
 if __name__ == '__main__':
-    testMatchTemplate()
+    testCreateTemplate()
     
     
     '''
