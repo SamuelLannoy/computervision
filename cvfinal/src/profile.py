@@ -77,10 +77,10 @@ directions and the number of pixels that should be sampled at each side.
 
 points is LM x Dim
 '''
-def getProfilesForPerson(matched, points, directions, n):
+def getProfilesForPerson(img, points, directions, n):
     profiles = np.zeros((points.shape[0], 2*n+1))
     for l in range(points.shape[0]):
-        profiles[l,:] = getProfileForPersonAndLandmark(matched, points[l,:], directions[l,:], n)
+        profiles[l,:] = getProfileForPersonAndLandmark(img, points[l,:], directions[l,:], n)
     return profiles
 
 '''
@@ -89,9 +89,9 @@ profile in the given image, at the given point in the given direction.
 
 point is two-tuple
 '''
-def getProfileForPersonAndLandmark(matched, point, direction, n):
+def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
-    prof = matched[ys_profile, xs_profile]
+    prof = img[ys_profile, xs_profile]
     norm = np.linalg.norm(prof, 1)
     return prof*1.0/norm # typing problem: int <> float 
 
@@ -234,7 +234,7 @@ MAIN PROGRAM
 if __name__ == '__main__':
     images, points = main.readData(1, 5, 40)
     #dirs = getDirections(points)
-    #print getProfileForPersonAndLandmark(matched, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
+    #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
     #covars, means = getModel(images, points, dirs, 2)
     #print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], directions[:,1,:], 6))
     #pt.plotTooth(points[:,1,:])

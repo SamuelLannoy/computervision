@@ -7,8 +7,8 @@ yPoints = array('f')
 nbModelPoints = 40
 counter = nbModelPoints
 
-def getModelPoints(matched):
-    image = matched.copy()
+def getModelPoints(img):
+    image = img.copy()
     cv2.namedWindow('points')
     cv2.cv.SetMouseCallback('points', mouseCallback, image)
     cv2.imshow('points', image)
@@ -20,6 +20,7 @@ def getModelPoints(matched):
         points[i,0] = xPoints[i]
         points[i,1] = yPoints[i]
         
+    print points
     return points
 
 def mouseCallback(event, xStacked, y, flags, param):
