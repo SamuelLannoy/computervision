@@ -229,16 +229,3 @@ def getNewModelPoints(imageToFit, points, model, n):
         newPoints[i] = getNewModelPoint(points[i], directions[i], n, tProfiles[i])
         
     return newPoints
-
-'''
-MAIN PROGRAM
-'''    
-if __name__ == '__main__':
-    #dirs = getDirections(points)
-    #print getProfileForPersonAndLandmark(matched, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
-    #covars, means = getModel(images, points, dirs, 2)
-    #print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], directions[:,1,:], 6))
-    #pt.plotTooth(points[:,1,:])
-    #pt.plotTooth(points[:,1,:] + 5*dirs[:,1,:])
-    #pt.show()
-    return 0
