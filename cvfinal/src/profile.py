@@ -1,8 +1,5 @@
 import numpy as np
 import cv2
-import main
-import matplotlib.pyplot as ppl
-import plot_teeth as pt
 
 np.set_printoptions(threshold='nan')
 
@@ -91,6 +88,8 @@ point is two-tuple
 '''
 def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
+    #print 'DB: profilepixels \n    (' + str(xs_profile) + ', ' + str(ys_profile) + ')'
+    #print 'DB  shape (' + str(img.shape[0]) + ', ' + str(img.shape[1]) + ')'
     prof = img[ys_profile, xs_profile]
     norm = np.linalg.norm(prof, 1)
     return prof*1.0/norm # typing problem: int <> float 
@@ -217,6 +216,9 @@ def getNewModelPoint(point, direction, n, tProfile):
     index = n-tProfile
     return xs_profile[index], ys_profile[index]
 
+'''
+points has the shape LM x Tooth x Dim
+'''
 def getNewModelPoints(imageToFit, points, model, n):
     directions = getDirectionsForPerson(points)
     profiles = getProfilesForPerson(imageToFit, points, directions, n)
@@ -227,16 +229,3 @@ def getNewModelPoints(imageToFit, points, model, n):
         newPoints[i] = getNewModelPoint(points[i], directions[i], n, tProfiles[i])
         
     return newPoints
-
-'''
-MAIN PROGRAM
-'''    
-if __name__ == '__main__':
-    images, points = main.readData(1, 5, 40)
-    #dirs = getDirections(points)
-    #print getProfileForPersonAndLandmark(img, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
-    #covars, means = getModel(images, points, dirs, 2)
-    #print matchProfiles((covars, means), getProfilesForPerson(img3, points[:,1,:], directions[:,1,:], 6))
-    #pt.plotTooth(points[:,1,:])
-    #pt.plotTooth(points[:,1,:] + 5*dirs[:,1,:])
-    #pt.show()
