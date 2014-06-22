@@ -16,6 +16,12 @@ windowscale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 nModel = 20
 nSample = 30
 
+# Choice of template score loyalty (for template matching in init_points) (higher means higher loyalty of the
+#  returned average tooth to templates with a better score
+#  0 -> unweighted average
+#  high value -> take template with highest score as initial points
+templ_scr_loyalty = 100
+
 # Choice of parameters (all Id's count from 0)
 nbLandmarks = 40
 trainingPersonIds = np.array(range(14))
@@ -185,10 +191,10 @@ if __name__ == '__main__':
         X = procrustes.translateMatrixForPerson(X, -translation)
         
         cv2.polylines(contourImage, np.int32([X]), True, 255)
-        showScaled(contourImage, windowscale, 'contours', False)
+        showScaled(contourImage, windowscale, 'contours', True)
         
-        cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
-        showScaled(segmentsImage, windowscale, 'segments', True)
+        #cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
+        #showScaled(segmentsImage, windowscale, 'segments', True)
                 
         # Plot projection on the model
         #pt.plotTooth(x)

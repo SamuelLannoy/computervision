@@ -61,9 +61,6 @@ def mouseCallback(event, x, y, flags, param):
 Returns initial points (Point x Tooth x Dim) for the given image with automatic searching.
 '''            
 def getModelPointsAutomatically(image, toothId):
-    # higher n means higher loyalty of the returned average tooth to templates with a better score
-    # 0 -> unweighted average, high value -> take template with highest score as initial points
-    n = 100 
     sumScrs = 0
     avgTeeth = np.zeros((main.nbLandmarks, main.toothIds.shape[0], 2))
     transLM = np.zeros((main.nbLandmarks, main.toothIds.shape[0], 2))
@@ -78,9 +75,9 @@ def getModelPointsAutomatically(image, toothId):
             toothIdx = main.toothIds[i]
             transLM[:,toothIdx,:] = procru.translateMatrixForPerson(templLM[:,toothIdx,:], np.array([[x],[y]]))
         # add the translated landmarks to the average tooth with weight = scr
-        avgTeeth = avgTeeth + scr**n*transLM
+        avgTeeth = avgTeeth + scr**main.templ_scr_loyalty*transLM
         # update the sum of all scores
-        sumScrs = sumScrs + scr**n
+        sumScrs = sumScrs + scr**main.templ_scr_loyalty
         
     return avgTeeth[:,toothId,:]/sumScrs
     
