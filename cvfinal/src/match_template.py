@@ -89,8 +89,8 @@ if __name__ == '__main__':
     personId = 6
     imgToMatch = cv2.imread(main.radiographPath(personId, True),0)
     template = cv2.imread('../data/Templates/01u.png',0)
-    matched = cv2.matchTemplate(imgToMatch, template, cv2.cv.CV_TM_SQDIFF_NORMED)
-    print cv2.minMaxLoc(matched) 
-    cv2.imshow('matched', matched)
+    img = cv2.matchTemplate(imgToMatch, template, cv2.cv.CV_TM_SQDIFF_NORMED)
+    print cv2.minMaxLoc(img) 
+    cv2.imshow('img', img)
     cv2.waitKey(0)
     '''

@@ -88,8 +88,7 @@ def showScaled(image, scale, name, wait):
 '''
 MAIN PROGRAM
 '''
-if __name__ == '__main__':
-    
+if __name__ == '__main__':    
     images = rg.readRadiographs(trainingPersonIds)
     if debugFB : print 'DB: Training radiographs loaded'
     imageToFit = rg.readRadioGraph(personToFitId)
@@ -105,7 +104,7 @@ if __name__ == '__main__':
         if debugFB : print 'DB: Landmarks loaded for tooth #' + str(toothId+1)
     
         # Choice of number of modes
-        nbModes = landmarks.shape[1]
+        nbModes = 7 #landmarks.shape[1]
         
         # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
         processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
@@ -117,7 +116,6 @@ if __name__ == '__main__':
         P = np.transpose(pcEigv[:nbModes]) # normalized
         covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
         eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
-        
         
         # Initialization of the initial points
         X = init_points.getModelPoints(imageToFit, toothId)
@@ -146,15 +144,14 @@ if __name__ == '__main__':
             
             ## Protocol 1: step 2 (generate model point positions)
             xStacked = xStriped + np.dot(P, b)
-    
+            
             ## Protocol 1: step 3 & 4 (project Y into the model coordinate frame)
             y, translation = procrustes.procrustesTranslateMatrixForPerson(Y)
             scale, rotation = alignShapes(unstackPointsForPerson(xStacked), y)
-            scale = 1/scale
-            rotation = -rotation
-            
-            y = procrustes.scaleMatrixForPerson(y, scale)
-            y = procrustes.rotateMatrixForPerson(y, rotation)
+            translation = -translation
+    
+            y = procrustes.rotateMatrixForPerson(y, -rotation)
+            y = procrustes.scaleMatrixForPerson(y, 1/scale)
             
             ## Protocol 1: step 5 --> NOT NEEDED??
             #yStacked = stackPointsForPerson(y) 
@@ -163,12 +160,15 @@ if __name__ == '__main__':
             
             ## Protocol 1: step 6 (update model parameters)
             b = np.dot(np.transpose(P), (stackPointsForPerson(y) - xStriped))
-            
+                            
             # Protocol 2: step 3 (apply constraints to b)
+            #mahalonobis = np.sqrt(np.sum(b**2)/np.sum(eigval))
+            #if mahalonobis > 3.0:
+            #   b = b*(3.0/mahalonobis)
+            
             for i in range(b.shape[0]):
                 if np.abs(b[i,0]) > 3*np.sqrt(eigval[i]):
                     b[i,0] = np.sign(b[i,0]) * 3*np.sqrt(eigval[i])
-            
             
             # Calculate difference with previous result
             # and stop iterating after a certain threshold
@@ -200,4 +200,4 @@ if __name__ == '__main__':
         #pt.plotTooth(x)
         #pt.plotTooth(y)
         #pt.plotTooth(unstackPointsForPerson(xStriped))
-        #pt.show()
+        #pt.show(

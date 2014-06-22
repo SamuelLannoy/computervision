@@ -16,8 +16,8 @@ counter = nbModelPoints
 '''
 Returns initial points (Point x Dim) for the given image with manually clikcing them.
 '''
-def getModelPointsManually(matched, toothId):
-    image = matched.copy()
+def getModelPointsManually(img, toothId):
+    image = img.copy()
     image = cv2.resize(image, (0,0), fx=main.windowscale, fy=main.windowscale)
     
     cv2.namedWindow('points')
@@ -35,6 +35,7 @@ def getModelPointsManually(matched, toothId):
         points[i,0] = xPoints[i]/main.windowscale
         points[i,1] = yPoints[i]/main.windowscale
         
+    print points
     return points
 
 '''

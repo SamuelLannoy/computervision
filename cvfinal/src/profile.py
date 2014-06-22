@@ -74,10 +74,10 @@ directions and the number of pixels that should be sampled at each side.
 
 points is LM x Dim
 '''
-def getProfilesForPerson(matched, points, directions, n):
+def getProfilesForPerson(img, points, directions, n):
     profiles = np.zeros((points.shape[0], 2*n+1))
     for l in range(points.shape[0]):
-        profiles[l,:] = getProfileForPersonAndLandmark(matched, points[l,:], directions[l,:], n)
+        profiles[l,:] = getProfileForPersonAndLandmark(img, points[l,:], directions[l,:], n)
     return profiles
 
 '''
@@ -86,11 +86,11 @@ profile in the given image, at the given point in the given direction.
 
 point is two-tuple
 '''
-def getProfileForPersonAndLandmark(matched, point, direction, n):
+def getProfileForPersonAndLandmark(img, point, direction, n):
     (xs_profile, ys_profile) = getProfilePixels(point, direction, n)
     #print 'DB: profilepixels \n    (' + str(xs_profile) + ', ' + str(ys_profile) + ')'
-    #print 'DB  shape (' + str(matched.shape[0]) + ', ' + str(matched.shape[1]) + ')'
-    prof = matched[ys_profile, xs_profile]
+    #print 'DB  shape (' + str(img.shape[0]) + ', ' + str(img.shape[1]) + ')'
+    prof = img[ys_profile, xs_profile]
     norm = np.linalg.norm(prof, 1)
     return prof*1.0/norm # typing problem: int <> float 
 
