@@ -186,9 +186,9 @@ if __name__ == '__main__':
         
         # Draw the model on the radiograph
         x = unstackPointsForPerson(xStriped + np.dot(P, b))
-        X = procrustes.rotateMatrixForPerson(x, -rotation)
-        X = procrustes.scaleMatrixForPerson(X, 1/scale)
-        X = procrustes.translateMatrixForPerson(X, -translation)
+        X = procrustes.rotateMatrixForPerson(x, rotation)
+        X = procrustes.scaleMatrixForPerson(X, scale)
+        X = procrustes.translateMatrixForPerson(X, translation)
         
         cv2.polylines(contourImage, np.int32([X]), True, 255)
         showScaled(contourImage, windowscale, 'contours', True)
