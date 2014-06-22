@@ -11,7 +11,7 @@ template, and lms are the (translated) landmarks of the template.
 '''
 
 '''
-Creates a template from the given image and landmarks (Tooth x LM x Dim).
+Creates a template from the given image and landmarks (LM x Tooth x Dim).
 
 The given image is presumed to be preprocessed, ie. no extra preprocessing will happen in this function.
 The given landmarks are presumed to be in the coordinate system of the image.
@@ -25,7 +25,7 @@ def createTemplate(image, landmarks):
     image = image[minY:maxY,minX:maxX]
     
     for toothId in range(8):
-        landmarks[toothId,:,:] = procru.translateMatrixForPerson(landmarks[toothId,:,:], np.array([[-minX],[-minY]]))
+        landmarks[:,toothId,:] = procru.translateMatrixForPerson(landmarks[:,toothId,:], np.array([[-minX],[-minY]]))
     
     return image, landmarks
 
@@ -43,12 +43,13 @@ Returns a triplet (Delta_X, Delta_Y, score) which is the best matching location 
 and the score of that match.
 '''
 def matchTemplate(image, templImage):
+    # TODO: scaling and rotation?
     matches = cv2.matchTemplate(image, templImage, cv2.cv.CV_TM_CCORR_NORMED)
     '''
     cv2.imshow('matches', matches)
     cv2.waitKey(0)
     '''
-    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(matches)
+    _, maxVal, _, maxLoc = cv2.minMaxLoc(matches)
     return maxLoc[0], maxLoc[1], maxVal
 
 def testMatchTemplate():

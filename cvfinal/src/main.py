@@ -95,7 +95,7 @@ if __name__ == '__main__':
     for i in range(toothIds.shape[0]):
         toothId = toothIds[i]
         # Read data (images and landmarks)
-        landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds, nbLandmarks)
+        landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds)
         if debugFB : print 'DB: Landmarks loaded for tooth #' + str(toothId+1)
     
         # Choice of number of modes

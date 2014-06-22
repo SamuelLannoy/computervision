@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import main
 
 np.set_printoptions(threshold='nan')
 
@@ -217,6 +216,9 @@ def getNewModelPoint(point, direction, n, tProfile):
     index = n-tProfile
     return xs_profile[index], ys_profile[index]
 
+'''
+points has the shape LM x Tooth x Dim
+'''
 def getNewModelPoints(imageToFit, points, model, n):
     directions = getDirectionsForPerson(points)
     profiles = getProfilesForPerson(imageToFit, points, directions, n)
@@ -232,7 +234,6 @@ def getNewModelPoints(imageToFit, points, model, n):
 MAIN PROGRAM
 '''    
 if __name__ == '__main__':
-    images, points = main.readData(1, 5, 40)
     #dirs = getDirections(points)
     #print getProfileForPersonAndLandmark(matched, (1,1), (np.sqrt(3.0)/2.0, 0.5), 10)
     #covars, means = getModel(images, points, dirs, 2)
@@ -240,3 +241,4 @@ if __name__ == '__main__':
     #pt.plotTooth(points[:,1,:])
     #pt.plotTooth(points[:,1,:] + 5*dirs[:,1,:])
     #pt.show()
+    return 0

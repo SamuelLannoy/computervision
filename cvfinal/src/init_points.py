@@ -58,32 +58,31 @@ def mouseCallback(event, x, y, flags, param):
             print str(counter) + ' to go'
 
 '''
-Returns initial points (Point x Dim) for the given image with automatic searching.
+Returns initial points (Point x Tooth x Dim) for the given image with automatic searching.
 '''            
 def getModelPointsAutomatically(image, toothId):
-    chosenScr = 0
+    # higher n means higher loyalty of the returned average tooth to templates with a better score
+    # 0 -> unweighted average, high value -> take template with highest score as initial points
+    n = 100 
+    sumScrs = 0
+    avgTeeth = np.zeros((main.nbLandmarks, main.toothIds.shape[0], 2))
+    transLM = np.zeros((main.nbLandmarks, main.toothIds.shape[0], 2))
+    
     for templId in range(14):
-        template = mt.createTemplate(rg.readRadioGraph(templId), lm.readLandmarksOfPerson(templId, 40))
-        x, y, scr = mt.matchTemplate(image, template[0])
-        if scr > chosenScr:
-            chosenScr = scr
-            chosenX = x
-            chosenY = y
-            chosenTemplate = template
-    '''
-    combined = image.copy()
-    combined[x:x+template[0].shape[0], y:y+template[0].shape[1]] = template[0]
-    cv2.circle(combined, (y,x), 3, 255, thickness=-1)
-    cv2.imshow('combined', combined)
-    '''
-    init_points = procru.translateMatrixForPerson(chosenTemplate[1][toothId,:,:], np.array([[chosenX],[chosenY]]))
-    '''
-    init_image = image.copy()
-    cv2.polylines(init_image, np.int32([init_points]), True, 255)
-    cv2.imshow('init_image',init_image)
-    cv2.waitKey(0)
-    '''
-    return init_points
+        # get the template
+        templImg, templLM = mt.createTemplate(rg.readRadioGraph(templId), lm.readLandmarksOfPerson(templId))
+        # match the template
+        x, y, scr = mt.matchTemplate(image, templImg)
+        # translate the template landmarks
+        for i in range(main.toothIds.shape[0]):
+            toothIdx = main.toothIds[i]
+            transLM[:,toothIdx,:] = procru.translateMatrixForPerson(templLM[:,toothIdx,:], np.array([[x],[y]]))
+        # add the translated landmarks to the average tooth with weight = scr
+        avgTeeth = avgTeeth + scr**n*transLM
+        # update the sum of all scores
+        sumScrs = sumScrs + scr**n
+        
+    return avgTeeth[:,toothId,:]/sumScrs
     
     
 '''
