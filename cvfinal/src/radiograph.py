@@ -2,12 +2,12 @@ import numpy as np
 import cv2
 
 cropX = (1100,1900)
-cropY = (450,1550)
+cropY = (500,1500)
 
 def preprocess(img):
     cropped = img[cropY[0]:cropY[1],cropX[0]:cropX[1]]
     denoised = cv2.fastNlMeansDenoising(cropped) #cv2.bilateralFilter(cropped, 9, 150, 150)  cv2.fastNlMeansDenoising(cropped) #h=5 
-    clahe = cv2.createCLAHE(clipLimit=5, tileGridSize=(8,8)); #16x16
+    clahe = cv2.createCLAHE(clipLimit=2, tileGridSize=(16,16)); #16x16
     return clahe.apply(denoised)
 
 def sharpen(img):

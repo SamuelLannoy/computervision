@@ -13,8 +13,8 @@ debugFB  = True
 windowscale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 
 # Choice of profile length (2n+1)
-nModel = 20
-nSample = 30
+nModel = 15
+nSample = 40
 
 # Choice whether the initial points are generated automatically
 autoInitPoints = True
