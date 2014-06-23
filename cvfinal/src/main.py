@@ -16,6 +16,9 @@ windowscale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 nModel = 20
 nSample = 30
 
+# Choice whether the initial points are generated automatically
+autoInitPoints = True
+
 # Choice of template score loyalty (for template matching in init_points) (higher means higher loyalty of the
 #  returned average tooth to templates with a better score
 #  0 -> unweighted average
@@ -97,6 +100,8 @@ if __name__ == '__main__':
     contourImage = imageToFit.copy()
     segmentsImage = np.zeros_like(np.array(imageToFit))
     
+    if autoInitPoints : init_points = init_points.getModelPointsHierarchically(personToFitId)
+    
     for i in range(toothIds.shape[0]):
         toothId = toothIds[i]
         # Read data (images and landmarks)
@@ -118,7 +123,8 @@ if __name__ == '__main__':
         eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
         
         # Initialization of the initial points
-        X = init_points.getModelPoints(imageToFit, toothId)
+        if autoInitPoints : X = init_points[:,toothId,:]
+        else : X = init_points.getModelPointsManually(personToFitId, toothId)
         
         # Draw the initial points
         initialImage = imageToFit.copy()
