@@ -60,8 +60,10 @@ def mouseCallback(event, x, y, flags, param):
 
 '''
 Returns initial points (Point x Tooth x Dim) for the given image with automatic searching.
+
+This method fits all teeth as a whole.
 '''            
-def getModelPointsAutomatically(personId):
+def getModelPointsAutoWhole(personId):
     image = rg.readRadioGraph(personId)
     sumScrs = 0
     avgTeeth = np.zeros((main.nbLandmarks, main.toothIds.shape[0], 2))
@@ -84,27 +86,92 @@ def getModelPointsAutomatically(personId):
         
     avgTeeth = avgTeeth/sumScrs
 
-    for i in range(8):
-        cv2.polylines(image, np.int32([avgTeeth[:,i,:]]), True, 255)
-    main.showScaled(image, 0.6, 'automatic initialisation', True)
+    #for i in range(8):
+    #    cv2.polylines(image, np.int32([avgTeeth[:,i,:]]), True, 255)
+    #main.showScaled(image, 0.6, 'automatic initialisation', True)
         
     return avgTeeth
 
 '''
-Return initial points (Point x Tooth x Dim) for the given image with automatic hierarchical searching.
+Return initial points (Point x Tooth x Dim) for the given image with automatic searching.
+
+This method fits the upper and lower part individually.
 '''
-def getModelPointsHierarchically(personId):
+def getModelPointsAutoParts(personId):
     debugMBB = True
     image = rg.readRadioGraph(personId)
     
-    # Choice of search area around the upper resp. lower inscisors within (preprocessed) image
+    # Choice of search area around the upper resp. lower inscisors within (preprocessed) image, for finding parts (upper and lower part) in an image
     ## these coordinates are in the not-preprocessed images, format Part x {UpperLeft, LowerRight} x Dim
     partSearchAreas = np.array([[[1190,550], [1830,1120]],
                                 [[1210,880], [1810,1400]]])
-    '''
-    partSearchAreas = np.array([[[523,527], [1478,1570]],
-                                [[889,913], [1478,1535]]])
-    '''
+    ## correct for preprocessing of images
+    partSearchAreas[:,:,0] = partSearchAreas[:,:,0] - np.ones_like(partSearchAreas[:,:,0])*rg.cropX[0]
+    partSearchAreas[:,:,1] = partSearchAreas[:,:,1] - np.ones_like(partSearchAreas[:,:,1])*rg.cropY[0]
+    
+    if debugMBB:
+        debugImage = image.copy()
+        cv2.rectangle(debugImage, (partSearchAreas[0,0,0], partSearchAreas[0,0,1]), (partSearchAreas[0,1,0], partSearchAreas[0,1,1]), 255)
+        cv2.rectangle(debugImage, (partSearchAreas[1,0,0], partSearchAreas[1,0,1]), (partSearchAreas[1,1,0], partSearchAreas[1,1,1]), 255)
+        #main.showScaled(debugImage, 0.6, 'debugImage', True)
+        
+        
+    ## get search images (image cropped to resp. search area)
+    upperImage = image.copy()[partSearchAreas[0,0,1]:partSearchAreas[0,1,1], partSearchAreas[0,0,0]:partSearchAreas[0,1,0]]
+    lowerImage = image.copy()[partSearchAreas[1,0,1]:partSearchAreas[1,1,1], partSearchAreas[1,0,0]:partSearchAreas[1,1,0]]
+    
+    sumUpScrs = 0
+    sumLowScrs = 0
+    avgUpTeeth = np.zeros((main.nbLandmarks, 4, 2))
+    avgLowTeeth = np.zeros((main.nbLandmarks, 4, 2))
+    upLMs = np.zeros((main.nbLandmarks, 4, 2))
+    lowLMs = np.zeros((main.nbLandmarks, 4, 2))
+    
+    for templId in range(14):
+        ## get templates for these parts
+        upTemplImg, upTemplLMs = mt.getTemplate(templId, np.array(range(4)), Delta=0)
+        lowTemplImg, lowTemplLMs = mt.getTemplate(templId, np.array(range(4,8)), Delta=0)
+        ## match templates
+        (upX,upY), upScale, upScore = mt.matchTemplate(upperImage, upTemplImg)
+        (lowX,lowY), lowScale, lowScore = mt.matchTemplate(lowerImage, lowTemplImg)
+        ## avoid deviding by zero when loyalty to best fit is high
+        if upScore == 0 : upScore = 1
+        if lowScore == 0 : lowScore = 1
+        # translate and scale the found landmarks
+        for toothIdy in range(4):
+            upLMs[:,toothIdy,:] = procru.scaleMatrixForPerson(upTemplLMs[:,toothIdy,:], upScale)
+            upLMs[:,toothIdy,:] = procru.translateMatrixForPerson(upLMs[:,toothIdy,:], np.array([[upX + partSearchAreas[0,0,0]],
+                                                                                                 [upY + partSearchAreas[0,0,1]]]))
+            lowLMs[:,toothIdy,:] = procru.scaleMatrixForPerson(lowTemplLMs[:,toothIdy,:], lowScale)
+            lowLMs[:,toothIdy,:] = procru.translateMatrixForPerson(lowLMs[:,toothIdy,:], np.array([[lowX + partSearchAreas[1,0,0]],
+                                                                                                   [lowY + partSearchAreas[1,0,1]]]))
+        # updat the average teeth
+        avgUpTeeth = avgUpTeeth + upScore**main.templ_scr_loyalty*upLMs
+        avgLowTeeth = avgLowTeeth + lowScore**main.templ_scr_loyalty*lowLMs
+            
+        # update the sum of all scores
+        sumUpScrs = sumUpScrs + upScore**main.templ_scr_loyalty
+        sumLowScrs = sumLowScrs + lowScore**main.templ_scr_loyalty
+    
+    # merge parts into one matrix
+    avgTeeth = np.zeros((main.nbLandmarks, 8, 2))
+    avgTeeth[:,0:4,:] = avgUpTeeth/sumUpScrs
+    avgTeeth[:,4:8,:] = avgLowTeeth/sumLowScrs
+    
+    return avgTeeth
+
+'''
+Return initial points (Point x Tooth x Dim) for the given image with automatic searching.
+
+This method fits each tooth individually'''
+def getModelPointsAutoTeeth(personId):
+    debugMBB = True
+    image = rg.readRadioGraph(personId)
+    
+    # Choice of search area around the upper resp. lower inscisors within (preprocessed) image, for finding parts (upper and lower part) in an image
+    ## these coordinates are in the not-preprocessed images, format Part x {UpperLeft, LowerRight} x Dim
+    partSearchAreas = np.array([[[1190,550], [1830,1120]],
+                                [[1210,880], [1810,1400]]])
     ## correct for preprocessing of images
     partSearchAreas[:,:,0] = partSearchAreas[:,:,0] - np.ones_like(partSearchAreas[:,:,0])*rg.cropX[0]
     partSearchAreas[:,:,1] = partSearchAreas[:,:,1] - np.ones_like(partSearchAreas[:,:,1])*rg.cropY[0]
@@ -169,8 +236,6 @@ def getModelPointsHierarchically(personId):
     #if debugMBB:
         #cv2.rectangle(debugImage, (upMBBUL[0], upMBBUL[1] ), (upMBBLR[0], upMBBLR[1] ), 255)
         #cv2.rectangle(debugImage, (lowMBBUL[0],lowMBBUL[1]), (lowMBBLR[0],lowMBBLR[1]), 255)
-        
-    
     
     #2 FIND LOCATION OF TEETH IN FOUND BOUNDING BOXES
     
@@ -188,22 +253,22 @@ def getModelPointsHierarchically(personId):
     lowDeltaX = lowMBBLR[0]-lowMBBUL[0]
     
     ## Choice of extra space to add around the searchboxes
-    extraSpace = 20
+    extraSearchSpace = 20
     
     searchBoxes = np.zeros((8,2,2)) # Tooth x {UpperLeft, LowerRight} x Dim
     ## calculate search boxes for teeth
     for toothIdx in range(4):
-        searchBoxes[toothIdx,0,0] = upMBBUL[0] + upDeltaX*searchBoxBorders[toothIdx,0] - extraSpace # upper part, upper left x
-        searchBoxes[toothIdx,0,1] = upMBBUL[1] - extraSpace # upper part, upper left y
-        searchBoxes[toothIdx,1,0] = upMBBUL[0] + upDeltaX*searchBoxBorders[toothIdx,1] + extraSpace # upper part, lower right x
-        searchBoxes[toothIdx,1,1] = upMBBLR[1] + extraSpace # upper part, lower right y
+        searchBoxes[toothIdx,0,0] = upMBBUL[0] + upDeltaX*searchBoxBorders[toothIdx,0] - extraSearchSpace # upper part, upper left x
+        searchBoxes[toothIdx,0,1] = upMBBUL[1] - extraSearchSpace # upper part, upper left y
+        searchBoxes[toothIdx,1,0] = upMBBUL[0] + upDeltaX*searchBoxBorders[toothIdx,1] + extraSearchSpace # upper part, lower right x
+        searchBoxes[toothIdx,1,1] = upMBBLR[1] + extraSearchSpace # upper part, lower right y
         if debugMBB : cv2.rectangle(debugImage, (np.int(searchBoxes[toothIdx,0,0]), np.int(searchBoxes[toothIdx,0,1])),
                                   (np.int(searchBoxes[toothIdx,1,0]), np.int(searchBoxes[toothIdx,1,1])), 255)
     for toothIdx in range(4,8):
-        searchBoxes[toothIdx,0,0] = lowMBBUL[0] + lowDeltaX*searchBoxBorders[toothIdx,0] - extraSpace # lower part, upper left x
-        searchBoxes[toothIdx,0,1] = lowMBBUL[1] - extraSpace # lower part, upper left y
-        searchBoxes[toothIdx,1,0] = lowMBBUL[0] + lowDeltaX*searchBoxBorders[toothIdx,1] + extraSpace # lower part, lower right x
-        searchBoxes[toothIdx,1,1] = lowMBBLR[1] + extraSpace # lower part, lower right y
+        searchBoxes[toothIdx,0,0] = lowMBBUL[0] + lowDeltaX*searchBoxBorders[toothIdx,0] - extraSearchSpace # lower part, upper left x
+        searchBoxes[toothIdx,0,1] = lowMBBUL[1] - extraSearchSpace # lower part, upper left y
+        searchBoxes[toothIdx,1,0] = lowMBBUL[0] + lowDeltaX*searchBoxBorders[toothIdx,1] + extraSearchSpace # lower part, lower right x
+        searchBoxes[toothIdx,1,1] = lowMBBLR[1] + extraSearchSpace # lower part, lower right y
         if debugMBB : cv2.rectangle(debugImage, (np.int(searchBoxes[toothIdx,0,0]), np.int(searchBoxes[toothIdx,0,1])),
                                   (np.int(searchBoxes[toothIdx,1,0]), np.int(searchBoxes[toothIdx,1,1])), 255)
     
@@ -233,9 +298,9 @@ def getModelPointsHierarchically(personId):
         avgTeeth[:,toothId,:] = avgTeeth[:,toothId,:]/sumScrs
       
         if debugMBB : cv2.polylines(debugImage, np.int32([avgTeeth[:,toothId,:]]), True, 255)
-    if debugMBB : main.showScaled(debugImage, 0.6, 'hierarchical initialisation', True)
+    #if debugMBB : main.showScaled(debugImage, 0.6, 'hierarchical initialisation', True)
 
-    return debugImage #avgTeeth
+    return avgTeeth
         
 '''
 Finds the middle of the teeth by finding the darkest horizontal line in the image.
@@ -254,7 +319,21 @@ MAIN PROGRAM
 '''
 if __name__ == '__main__':
     for i in range(14,30):
-        #getModelPointsAutomatically(i)
-        debugImg = getModelPointsHierarchically(i)
-        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/results/' + str(i+1) + '.jpg', getModelPointsHierarchically(i))
+        imageWhole = rg.readRadioGraph(i)
+        imageParts = imageWhole.copy()
+        imageTeeth = imageWhole.copy()
+        
+        resultWhole = getModelPointsAutoWhole(i)
+        resultParts = getModelPointsAutoParts(i)
+        resultTeeth = getModelPointsAutoTeeth(i)
+        
+        for toothId in range(8):
+            cv2.polylines(imageWhole, np.int32([resultWhole[:,toothId,:]]), True, 255)
+            cv2.polylines(imageParts, np.int32([resultParts[:,toothId,:]]), True, 255)
+            cv2.polylines(imageTeeth, np.int32([resultTeeth[:,toothId,:]]), True, 255)
+            
+        main.showScaled(imageWhole, 0.6, 'whole', False)
+        main.showScaled(imageParts, 0.6, 'parts', False)
+        main.showScaled(imageTeeth, 0.6, 'teeth', True)
+        
         print i

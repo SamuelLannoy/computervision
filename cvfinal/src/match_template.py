@@ -14,7 +14,7 @@ template, and lms are the (translated) landmarks of the template.
 '''
 Creates a template from the given personId (image) and tooth. Delta is the extra space around the landmarks in the returned image.s
 '''
-def getTemplate(personId, toothIds, Delta=20):
+def getTemplate(personId, toothIds, Delta=15):
     # read landmarks and image
     landmarks = lm.readLandmarksOfPersonAndTeeth(personId, toothIds)
     image = rg.readRadioGraph(personId)
@@ -47,11 +47,8 @@ def matchTemplate(image, templImage, scales = np.array([0.8, 0.9, 1.0, 1.1, 1.2]
         scaled_templ = cv2.resize(templImage.copy(), (0,0), fx=scale, fy=scale)
         # avoid scaling too large
         if scaled_templ.shape[0] < image.shape[0] and scaled_templ.shape[1] < image.shape[1] :
-            matches = cv2.matchTemplate(image, scaled_templ, cv2.cv.CV_TM_SQDIFF_NORMED)
-            scr, _, loc, _ = cv2.minMaxLoc(matches)
-            # invert, because SQDIFF gives lower results for better matches
-            if scr == 0 : return loc, scale, scr
-            scr = 1.0-scr
+            matches = cv2.matchTemplate(image, scaled_templ, cv2.cv.CV_TM_CCOEFF_NORMED)
+            _, scr, _, loc = cv2.minMaxLoc(matches)
             if scr > chosenScr:
                 chosenScr = scr
                 chosenLoc = loc
