@@ -111,16 +111,30 @@ if __name__ == '__main__':
         # Choice of number of modes
         nbModes = 7 #landmarks.shape[1]
         
+
+        
         # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
         processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
         if debugFB : print 'DB: Procrustes ready for tooth #' + str(toothId+1)
         pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
         if debugFB : print 'DB: PCA ready for tooth #' + str(toothId+1)
+        xStacked = xStriped = np.transpose(pcMean)        
         
-        xStacked = xStriped = np.transpose(pcMean)
-        P = np.transpose(pcEigv[:nbModes]) # normalized
         covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
-        eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
+        eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1]
+        
+         # Number of modes
+        coverage = 0
+        nbModes = 0
+        eigval_total = np.sum(eigval)
+        for value in eigval:
+            coverage += value/eigval_total
+            nbModes += 1
+            if coverage >= 0.98:
+                break
+        
+        P = np.transpose(pcEigv[:nbModes]) # normalized
+        eigval = eigval[:nbModes]
         
         # Initialization of the initial points
         if autoInitPoints : X = init_points[:,toothId,:]
