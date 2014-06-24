@@ -336,4 +336,8 @@ if __name__ == '__main__':
         main.showScaled(imageParts, 0.6, 'parts', False)
         main.showScaled(imageTeeth, 0.6, 'teeth', True)
         
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(i+1) + '-whole.jpg', imageWhole)
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(i+1) + '-parts.jpg', imageParts)
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(i+1) + '-teeth.jpg', imageTeeth)
+        
         print i

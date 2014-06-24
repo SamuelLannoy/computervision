@@ -132,10 +132,8 @@ if __name__ == '__main__':
             for value in eigval:
                 coverage += value/eigval_total
                 nbModes += 1
-                if coverage >= 0.98:
+                if coverage >= 0.99:
                     break
-                
-            print nbModes
             
             P = np.transpose(pcEigv[:nbModes]) # normalized
             eigval = eigval[:nbModes]
