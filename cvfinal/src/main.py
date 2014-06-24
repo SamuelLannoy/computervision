@@ -10,7 +10,7 @@ import profile
 
 # Choice of technical parameters
 debugFB  = True
-windowscale = np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
+windowscale = 1.0 #np.float(733)/np.float(rg.cropY[1]-rg.cropY[0])
 
 # Choice of profile length (2n+1)
 nModel = 15
@@ -92,10 +92,11 @@ def showScaled(image, scale, name, wait):
 MAIN PROGRAM
 '''
 if __name__ == '__main__':
+
     # load training radiographs    
     images = rg.readRadiographs(trainingPersonIds)
     if debugFB : print 'DB: Training radiographs loaded'
-    
+
     for personToFitId in personToFitIds:
         # load radiograph to determine segments for
         imageToFit = rg.readRadioGraph(personToFitId)
@@ -105,28 +106,40 @@ if __name__ == '__main__':
         segmentsImage = np.zeros_like(np.array(imageToFit))
         
         if autoInitPoints : init_points = ip.getModelPointsHierarchically(personToFitId)
-        
+
         for i in range(toothIds.shape[0]):
             toothId = toothIds[i]
             
             # Read data (images and landmarks)
             landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds)
             if debugFB : print '   DB: Landmarks loaded for tooth #' + str(toothId+1)
-        
-            # Choice of number of modes
-            nbModes = 7 #landmarks.shape[1]
             
             # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
             processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
             if debugFB : print '   DB: Procrustes ready for tooth #' + str(toothId+1)
             pcMean, pcEigv = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
             if debugFB : print '   DB: PCA ready for tooth #' + str(toothId+1)
+            xStacked = xStriped = np.transpose(pcMean)        
             
-            xStacked = xStriped = np.transpose(pcMean)
-            P = np.transpose(pcEigv[:nbModes]) # normalized
             covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
-            eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1][:nbModes] # pick t larges eigenvalues
+            eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1]
             
+            
+            # Number of modes
+            coverage = 0
+            nbModes = 0
+            eigval_total = np.sum(eigval)
+            for value in eigval:
+                coverage += value/eigval_total
+                nbModes += 1
+                if coverage >= 0.98:
+                    break
+                
+            print nbModes
+            
+            P = np.transpose(pcEigv[:nbModes]) # normalized
+            eigval = eigval[:nbModes]
+
             # Initialization of the initial points
             if autoInitPoints : X = init_points[:,toothId,:]
             else : X = init_points.getModelPointsManually(personToFitId, toothId)
@@ -146,8 +159,7 @@ if __name__ == '__main__':
         
             stop = False
             it = 1
-            while(not stop): 
-                
+            while(not stop):
                 # Protocol 2: step 1 (examine region around each point to find best nearby match)
                 Y = profile.getNewModelPoints(imageToFit, X, model, nSample)
                 

@@ -234,7 +234,7 @@ def getModelPointsHierarchically(personId):
       
         if debugMBB : cv2.polylines(debugImage, np.int32([avgTeeth[:,toothId,:]]), True, 255)
     if debugMBB : main.showScaled(debugImage, 0.6, 'hierarchical initialisation', True)
-           
+
     return debugImage #avgTeeth
         
 '''
