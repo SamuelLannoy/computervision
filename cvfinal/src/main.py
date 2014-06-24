@@ -92,6 +92,7 @@ def showScaled(image, scale, name, wait):
 MAIN PROGRAM
 '''
 if __name__ == '__main__':
+
     # load training radiographs    
     images = rg.readRadiographs(trainingPersonIds)
     if debugFB : print 'DB: Training radiographs loaded'
@@ -105,14 +106,14 @@ if __name__ == '__main__':
         segmentsImage = np.zeros_like(np.array(imageToFit))
         
         if autoInitPoints : init_points = ip.getModelPointsHierarchically(personToFitId)
-        
+
         for i in range(toothIds.shape[0]):
             toothId = toothIds[i]
             
             # Read data (images and landmarks)
             landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds)
             if debugFB : print '   DB: Landmarks loaded for tooth #' + str(toothId+1)
-
+            
             # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
             processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
             if debugFB : print '   DB: Procrustes ready for tooth #' + str(toothId+1)
@@ -156,8 +157,7 @@ if __name__ == '__main__':
         
             stop = False
             it = 1
-            while(not stop): 
-                
+            while(not stop):
                 # Protocol 2: step 1 (examine region around each point to find best nearby match)
                 Y = profile.getNewModelPoints(imageToFit, X, model, nSample)
                 
@@ -212,12 +212,12 @@ if __name__ == '__main__':
             X = procrustes.translateMatrixForPerson(X, translation)
             
             cv2.polylines(contourImage, np.int32([X]), True, 255)
-            showScaled(contourImage, windowscale, 'contours', True)
+            #showScaled(contourImage, windowscale, 'contours', True)
             
-            #cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
+            cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
             #showScaled(segmentsImage, windowscale, 'segments', True)
-        #cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/contours' + str(personToFitId+1) + '.jpg', contourImage)
-        #cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/segments' + str(personToFitId+1) + '.jpg', segmentsImage)
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/contours' + str(personToFitId+1) + '.jpg', contourImage)
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/segments' + str(personToFitId+1) + '.jpg', segmentsImage)
             
         print 'DB: Radiograph #' + str(personToFitId+1) + ' is segmented.'
                     

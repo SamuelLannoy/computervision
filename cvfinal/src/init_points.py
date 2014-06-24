@@ -234,8 +234,8 @@ def getModelPointsHierarchically(personId):
       
         if debugMBB : cv2.polylines(debugImage, np.int32([avgTeeth[:,toothId,:]]), True, 255)
     if debugMBB : main.showScaled(debugImage, 0.6, 'hierarchical initialisation', True)
-           
-    return avgTeeth
+
+    return debugImage #avgTeeth
         
 '''
 Finds the middle of the teeth by finding the darkest horizontal line in the image.
