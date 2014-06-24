@@ -47,8 +47,8 @@ def matchTemplate(image, templImage, scales = np.array([0.8, 0.9, 1.0, 1.1, 1.2]
         scaled_templ = cv2.resize(templImage.copy(), (0,0), fx=scale, fy=scale)
         # avoid scaling too large
         if scaled_templ.shape[0] < image.shape[0] and scaled_templ.shape[1] < image.shape[1] :
-            matches = cv2.matchTemplate(image, scaled_templ, cv2.cv.CV_TM_SQDIFF_NORMED)
-            scr, _, loc, _ = cv2.minMaxLoc(matches)
+            matches = cv2.matchTemplate(image, scaled_templ, cv2.cv.CV_TM_CCOEFF_NORMED)
+            _, scr, _, loc = cv2.minMaxLoc(matches)
             # invert, because SQDIFF gives lower results for better matches
             if scr == 0 : return loc, scale, scr
             scr = 1.0-scr
