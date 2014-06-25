@@ -76,9 +76,8 @@ def getModelPointsAutoWhole(personId):
         (x,y), scale, scr = mt.matchTemplate(image, templImg)
         # translate the template landmarks
         for i in range(main.toothIds.shape[0]):
-            toothIdx = main.toothIds[i]
-            corrLM[:,toothIdx,:] = procru.scaleMatrixForPerson(templLM[:,toothIdx,:], scale)
-            corrLM[:,toothIdx,:] = procru.translateMatrixForPerson(corrLM[:,toothIdx,:], np.array([[x],[y]]))
+            corrLM[:,i,:] = procru.scaleMatrixForPerson(templLM[:,i,:], scale)
+            corrLM[:,i,:] = procru.translateMatrixForPerson(corrLM[:,i,:], np.array([[x],[y]]))
         # add the translated landmarks to the average tooth with weight = scr
         avgTeeth = avgTeeth + scr**main.templ_scr_loyalty*corrLM
         # update the sum of all scores

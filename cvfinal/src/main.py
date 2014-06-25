@@ -7,6 +7,7 @@ import landmarks as lm
 import init_points as ip
 import procrustes
 import profile
+import plot_teeth as pt
 
 # Choice of technical parameters
 debugFB  = True
@@ -17,7 +18,7 @@ nModel = 15
 nSample = 40
 
 # Choice whether the initial points are generated automatically
-autoInitPoints = False
+autoInitPoints = True
 
 # Choice of template score loyalty (for template matching in init_points) (higher means higher loyalty of the
 #  returned average tooth to templates with a better score
@@ -28,8 +29,8 @@ templ_scr_loyalty = 2
 # Choice of parameters (all Id's count from 0)
 nbLandmarks = 40
 trainingPersonIds = np.array(range(14))
-personToFitIds = [18]
-toothIds = np.array([1])
+personToFitIds = range(14,30)
+toothIds = np.array(range(8))
 
 '''
 landmarks is LM x Pers x Dim
@@ -57,8 +58,6 @@ def unstackPointsForPerson(stackedLandmarks):
     return np.column_stack((stackedLandmarks[0:columnLength], stackedLandmarks[columnLength:2*columnLength]))
 
 '''
-TODO: deze methode naar procrustes
-
 Aligns the given shapes with each other.
 Returning scale [0] and rotation [1].
 
@@ -87,12 +86,27 @@ def showScaled(image, scale, name, wait):
     showed = cv2.resize(showed, (0,0), fx=scale, fy=scale)
     cv2.imshow(name, showed)
     if wait : cv2.waitKey(0)
-  
-'''
-MAIN PROGRAM
-'''
-if __name__ == '__main__':
-
+    
+def plotVariations(toothId=0, nbModes=15):
+    # Read data (images and landmarks)
+    landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds)
+    # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
+    processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
+    mean, eigvec = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
+    # Calculate the eigenvalues and sort them
+    covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
+    eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1]
+    
+    for mode in range(nbModes):
+        for var in [-3,0,3]:
+            tooth = mean + var*(eigval[mode]**0.5)*eigvec[mode]
+            tooth = unstackPointsForPerson(np.transpose(tooth))
+            # plot the tooth
+            pt.plotTooth(tooth)
+        # show the variations
+        pt.show()
+            
+def findSegments():
     # load training radiographs    
     images = rg.readRadiographs(trainingPersonIds)
     if debugFB : print 'DB: Training radiographs loaded'
@@ -141,11 +155,9 @@ if __name__ == '__main__':
             if autoInitPoints : X = init_points[:,toothId,:]
             else : X = ip.getModelPointsManually(personToFitId, toothId)
             
-            
             # Draw the initial points
             initialImage = imageToFit.copy()
             cv2.polylines(initialImage, np.int32([X]), True, 255, thickness = 2)
-            cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 'i.jpg', initialImage)
             #showScaled(initialImage, windowscale, 'initial', False)
             
             # Initialize the model
@@ -218,7 +230,16 @@ if __name__ == '__main__':
             cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
             #showScaled(segmentsImage, windowscale, 'segments', True)
             
-        cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 'c.jpg', contourImage)
-        cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 's.jpg', segmentsImage)
+        #cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 'i.jpg', initialImage)
+        #cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 'c.jpg', contourImage)
+        #cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 's.jpg', segmentsImage)
+        showScaled(contourImage, windowscale, 'contours', True)
             
         print 'DB: Radiograph #' + str(personToFitId+1) + ' is segmented.'
+  
+'''
+MAIN PROGRAM
+'''
+if __name__ == '__main__':
+    #plotVariations()
+    findSegments()

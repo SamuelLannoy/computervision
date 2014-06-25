@@ -28,6 +28,7 @@ def plotToothXY(xStacked,y):
     ppl.plot(xStacked,y)
 
 def show():
+    ppl.autoscale()
     ppl.axis('equal')
     ppl.gca().invert_yaxis()
     ppl.show()
