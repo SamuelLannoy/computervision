@@ -7,6 +7,7 @@ import landmarks as lm
 import init_points as ip
 import procrustes
 import profile
+import plot_teeth as pt
 
 # Choice of technical parameters
 debugFB  = True
@@ -87,12 +88,27 @@ def showScaled(image, scale, name, wait):
     showed = cv2.resize(showed, (0,0), fx=scale, fy=scale)
     cv2.imshow(name, showed)
     if wait : cv2.waitKey(0)
-  
-'''
-MAIN PROGRAM
-'''
-if __name__ == '__main__':
-
+    
+def plotVariations(toothId=0, nbModes=15):
+    # Read data (images and landmarks)
+    landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds)
+    # Initialization of mean vector (xStriped), covariance matrix, x-vector, x-striped-vector (mean), eigenvectors (P) and eigenvalues.
+    processedLandmarks = procrustes.procrustesMatrix(landmarks,100)
+    mean, eigvec = cv2.PCACompute(np.transpose(stackPoints(processedLandmarks)))
+    # Calculate the eigenvalues and sort them
+    covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
+    eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1]
+    
+    for mode in range(nbModes):
+        for var in [-3,0,3]:
+            tooth = mean + var*(eigval[mode]**0.5)*eigvec[mode]
+            tooth = unstackPointsForPerson(np.transpose(tooth))
+            # plot the tooth
+            pt.plotTooth(tooth)
+        # show the variations
+        pt.show()
+            
+def findSegments():
     # load training radiographs    
     images = rg.readRadiographs(trainingPersonIds)
     if debugFB : print 'DB: Training radiographs loaded'
@@ -220,8 +236,15 @@ if __name__ == '__main__':
             
         print 'DB: Radiograph #' + str(personToFitId+1) + ' is segmented.'
                     
-            # Plot projection on the model
-            #pt.plotTooth(x)
-            #pt.plotTooth(y)
-            #pt.plotTooth(unstackPointsForPerson(xStriped))
-            #pt.show(
+        # Plot projection on the model
+        #pt.plotTooth(x)
+        #pt.plotTooth(y)
+        #pt.plotTooth(unstackPointsForPerson(xStriped))
+        #pt.show(
+  
+'''
+MAIN PROGRAM
+'''
+if __name__ == '__main__':
+    #plotVariations()
+    findSegments()
