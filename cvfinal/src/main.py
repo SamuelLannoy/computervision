@@ -17,7 +17,7 @@ nModel = 15
 nSample = 40
 
 # Choice whether the initial points are generated automatically
-autoInitPoints = True
+autoInitPoints = False
 
 # Choice of template score loyalty (for template matching in init_points) (higher means higher loyalty of the
 #  returned average tooth to templates with a better score
@@ -28,8 +28,8 @@ templ_scr_loyalty = 2
 # Choice of parameters (all Id's count from 0)
 nbLandmarks = 40
 trainingPersonIds = np.array(range(14))
-personToFitIds = range(14,30)
-toothIds = np.array(range(8))
+personToFitIds = [30]
+toothIds = np.array([7])
 
 '''
 landmarks is LM x Pers x Dim
