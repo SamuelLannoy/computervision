@@ -28,8 +28,8 @@ templ_scr_loyalty = 2
 # Choice of parameters (all Id's count from 0)
 nbLandmarks = 40
 trainingPersonIds = np.array(range(14))
-personToFitIds = [30]
-toothIds = np.array([7])
+personToFitIds = [18]
+toothIds = np.array([1])
 
 '''
 landmarks is LM x Pers x Dim
@@ -141,9 +141,11 @@ if __name__ == '__main__':
             if autoInitPoints : X = init_points[:,toothId,:]
             else : X = ip.getModelPointsManually(personToFitId, toothId)
             
+            
             # Draw the initial points
             initialImage = imageToFit.copy()
-            cv2.polylines(initialImage, np.int32([X]), True, 255)
+            cv2.polylines(initialImage, np.int32([X]), True, 255, thickness = 2)
+            cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 'i.jpg', initialImage)
             #showScaled(initialImage, windowscale, 'initial', False)
             
             # Initialize the model
@@ -215,13 +217,8 @@ if __name__ == '__main__':
             
             cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
             #showScaled(segmentsImage, windowscale, 'segments', True)
-        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/contours' + str(personToFitId+1) + '.jpg', contourImage)
-        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/segments' + str(personToFitId+1) + '.jpg', segmentsImage)
+            
+        cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 'c.jpg', contourImage)
+        cv2.imwrite('C:/Users/samue_000/Desktop/' + str(personToFitId+1) + 's.jpg', segmentsImage)
             
         print 'DB: Radiograph #' + str(personToFitId+1) + ' is segmented.'
-                    
-            # Plot projection on the model
-            #pt.plotTooth(x)
-            #pt.plotTooth(y)
-            #pt.plotTooth(unstackPointsForPerson(xStriped))
-            #pt.show(
