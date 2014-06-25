@@ -105,7 +105,7 @@ if __name__ == '__main__':
         contourImage = imageToFit.copy()
         segmentsImage = np.zeros_like(np.array(imageToFit))
         
-        if autoInitPoints : init_points = ip.getModelPointsHierarchically(personToFitId)
+        if autoInitPoints : init_points = ip.getModelPointsAutoWhole(personToFitId)
 
         for i in range(toothIds.shape[0]):
             toothId = toothIds[i]
@@ -124,7 +124,6 @@ if __name__ == '__main__':
             covar, _ = cv2.calcCovarMatrix(stackPoints(processedLandmarks), cv2.cv.CV_COVAR_SCRAMBLED | cv2.cv.CV_COVAR_SCALE | cv2.cv.CV_COVAR_COLS)    
             eigval = np.sort(np.linalg.eigvals(covar), kind='mergesort')[::-1]
             
-            
             # Number of modes
             coverage = 0
             nbModes = 0
@@ -140,7 +139,7 @@ if __name__ == '__main__':
 
             # Initialization of the initial points
             if autoInitPoints : X = init_points[:,toothId,:]
-            else : X = init_points.getModelPointsManually(personToFitId, toothId)
+            else : X = ip.getModelPointsManually(personToFitId, toothId)
             
             # Draw the initial points
             initialImage = imageToFit.copy()
@@ -211,7 +210,7 @@ if __name__ == '__main__':
             X = procrustes.scaleMatrixForPerson(X, scale)
             X = procrustes.translateMatrixForPerson(X, translation)
             
-            cv2.polylines(contourImage, np.int32([X]), True, 255)
+            cv2.polylines(contourImage, np.int32([X]), True, 255, thickness = 2)
             #showScaled(contourImage, windowscale, 'contours', True)
             
             cv2.fillPoly(segmentsImage, np.int32([[X]]), 128)
