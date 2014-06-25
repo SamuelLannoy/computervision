@@ -163,7 +163,9 @@ def getModelPointsAutoParts(personId):
 '''
 Return initial points (Point x Tooth x Dim) for the given image with automatic searching.
 
-This method fits each tooth individually'''
+This method fits each tooth individually, by first looking for the upper and lower parts and then
+fitting each teeth in an estimates search area.
+'''
 def getModelPointsAutoTeeth(personId):
     debugMBB = True
     image = rg.readRadioGraph(personId)
@@ -253,7 +255,7 @@ def getModelPointsAutoTeeth(personId):
     lowDeltaX = lowMBBLR[0]-lowMBBUL[0]
     
     ## Choice of extra space to add around the searchboxes
-    extraSearchSpace = 20
+    extraSearchSpace = 30
     
     searchBoxes = np.zeros((8,2,2)) # Tooth x {UpperLeft, LowerRight} x Dim
     ## calculate search boxes for teeth
@@ -318,26 +320,26 @@ def getVerticalMiddleOfTeeth(image):
 MAIN PROGRAM
 '''
 if __name__ == '__main__':
-    for i in range(14,30):
-        imageWhole = rg.readRadioGraph(i)
+    for personId in range(14,30):
+        imageWhole = rg.readRadioGraph(personId)
         imageParts = imageWhole.copy()
         imageTeeth = imageWhole.copy()
         
-        resultWhole = getModelPointsAutoWhole(i)
-        resultParts = getModelPointsAutoParts(i)
-        resultTeeth = getModelPointsAutoTeeth(i)
+        resultWhole = getModelPointsAutoWhole(personId)
+        resultParts = getModelPointsAutoParts(personId)
+        resultTeeth = getModelPointsAutoTeeth(personId)
         
         for toothId in range(8):
             cv2.polylines(imageWhole, np.int32([resultWhole[:,toothId,:]]), True, 255)
             cv2.polylines(imageParts, np.int32([resultParts[:,toothId,:]]), True, 255)
             cv2.polylines(imageTeeth, np.int32([resultTeeth[:,toothId,:]]), True, 255)
-            
+        '''    
         main.showScaled(imageWhole, 0.6, 'whole', False)
         main.showScaled(imageParts, 0.6, 'parts', False)
         main.showScaled(imageTeeth, 0.6, 'teeth', True)
+        '''
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(personId+1) + '-whole.jpg', imageWhole)
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(personId+1) + '-parts.jpg', imageParts)
+        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(personId+1) + '-teeth.jpg', imageTeeth)
         
-        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(i+1) + '-whole.jpg', imageWhole)
-        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(i+1) + '-parts.jpg', imageParts)
-        cv2.imwrite('U:/vital.dhaveloose/Lokaal/Bureaublad/init_points/' + str(i+1) + '-teeth.jpg', imageTeeth)
-        
-        print i
+        print 'Person #' + str(personId+1) + ' is done.'

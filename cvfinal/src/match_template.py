@@ -54,7 +54,7 @@ def matchTemplate(image, templImage, scales = np.array([0.8, 0.9, 1.0, 1.1, 1.2]
                 chosenLoc = loc
                 chosenScale = scale
                 
-    if chosenScale == 0 : print 'The given template image does not fit in the given image for any scale.'
+    if chosenScale == 0 : print 'The given template image does not fit in the given image for any scale. Template: ' + str(templImage.shape) + ' , Image: ' +str(image.shape)
     
     return chosenLoc, chosenScale, chosenScr
 
