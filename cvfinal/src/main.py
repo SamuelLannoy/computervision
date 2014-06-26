@@ -87,6 +87,9 @@ def showScaled(image, scale, name, wait):
     cv2.imshow(name, showed)
     if wait : cv2.waitKey(0)
     
+'''
+Plot the variations of the PCA model
+'''
 def plotVariations(toothId=0, nbModes=15):
     # Read data (images and landmarks)
     landmarks = lm.readLandmarksOfTooth(toothId, trainingPersonIds)
@@ -106,6 +109,9 @@ def plotVariations(toothId=0, nbModes=15):
         # show the variations
         pt.show()
             
+'''
+Find the incisors in the radiographs.
+'''
 def findSegments():
     # load training radiographs    
     images = rg.readRadiographs(trainingPersonIds)
