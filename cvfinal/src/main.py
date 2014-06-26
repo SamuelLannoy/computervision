@@ -58,27 +58,6 @@ def unstackPointsForPerson(stackedLandmarks):
     return np.column_stack((stackedLandmarks[0:columnLength], stackedLandmarks[columnLength:2*columnLength]))
 
 '''
-Aligns the given shapes with each other.
-Returning scale [0] and rotation [1].
-
-x1 and x2 are LM * Dim
-'''
-def alignShapes(x1, x2):
-    x1Stacked = stackPointsForPerson(x1)
-    x2Stacked = stackPointsForPerson(x2)
-    
-    x1_norm_sq = np.linalg.norm(x1Stacked, 2)**2
-    
-    a = np.dot(np.transpose(x1Stacked), x2Stacked)[0][0]/x1_norm_sq
-    
-    b = 0
-    for i in range(x1.shape[0]):
-        b += x1[i,0]*x2[i,1] - x1[i,1]*x2[i,0]
-    b /= x1_norm_sq
-    
-    return np.sqrt(a**2 + b**2), np.arctan2(b, a)
-
-'''
 Copies the given image and shows a scaled version of the copy.
 '''
 def showScaled(image, scale, name, wait):
@@ -187,7 +166,7 @@ def findSegments():
                 
                 ## Protocol 1: step 3 & 4 (project Y into the model coordinate frame)
                 y, translation = procrustes.procrustesTranslateMatrixForPerson(Y)
-                scale, rotation = alignShapes(unstackPointsForPerson(xStacked), y)
+                scale, rotation = procrustes.alignShapes(unstackPointsForPerson(xStacked), y)
                 translation = -translation
         
                 y = procrustes.rotateMatrixForPerson(y, -rotation)

@@ -1,4 +1,5 @@
 import numpy as np
+import main
 
 '''
 TRANSLATION
@@ -94,7 +95,7 @@ def procrustesScaleMatrixForPerson(matrix):
     for l in range(matrix.shape[0]):
         dists[l] = np.sqrt(matrix[l,0]**2+matrix[l,1]**2)
     
-    scale = 1/np.std(dists)
+    scale = 1/np.average(dists)
     
     return ret*scale, scale
     
@@ -147,12 +148,32 @@ def procrustesRotateMatrix(matrix,target):
     return rotated, thetas
 
 '''
+Aligns the given shapes with each other.
+Returning scale [0] and rotation [1].
+'''
+def alignShapes(x1, x2):    
+    x1Stacked = main.stackPointsForPerson(x1)
+    x2Stacked = main.stackPointsForPerson(x2)
+    
+    x1_norm_sq = np.linalg.norm(x1Stacked, 2)**2
+    
+    a = np.dot(np.transpose(x1Stacked), x2Stacked)[0][0]/x1_norm_sq
+    
+    b = 0
+    for i in range(x1.shape[0]):
+        b += x1[i,0]*x2[i,1] - x1[i,1]*x2[i,0]
+    b /= x1_norm_sq
+    
+    return np.sqrt(a**2 + b**2), np.arctan2(b, a)
+
+'''
 matrix is LM x Dim
 '''
 def procrustesRotateMatrixForPerson(matrix,target):
-    theta = getSmallestSSDAngle(target,matrix)
+    #theta = getSmallestSSDAngle(target,matrix)
+    _, theta = alignShapes(target, matrix)
             
-    return rotateMatrixForPerson(matrix,theta), theta
+    return rotateMatrixForPerson(matrix,-theta), -theta
 
 '''
 matrix is LM x Pers x Dim
